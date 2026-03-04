@@ -1,0 +1,444 @@
+---
+title: "Agent Configuration Reference"
+description: "Technical reference for the AgentConfig interface and agent system"
+---
+
+The Skills CLI uses the `AgentConfig` interface to define how to detect and install skills for each supported coding agent.
+
+## AgentConfig Interface
+
+Defined in `src/types.ts`, the `AgentConfig` interface specifies the configuration for each agent:
+
+```typescript
+export interface AgentConfig {
+  name: string;
+  displayName: string;
+  skillsDir: string;
+  globalSkillsDir: string | undefined;
+  detectInstalled: () => Promise<boolean>;
+  showInUniversalList?: boolean;
+}
+```
+
+## Field Reference
+
+<ParamField path="name" type="string" required>
+  Unique identifier for the agent in kebab-case. Used in CLI commands with the `--agent` flag.
+  
+  **Examples:**
+  - `claude-code`
+  - `cursor`
+  - `github-copilot`
+  
+  This is also the `AgentType` used throughout the codebase.
+</ParamField>
+
+<ParamField path="displayName" type="string" required>
+  Human-readable name shown in CLI output and prompts.
+  
+  **Examples:**
+  - `"Claude Code"`
+  - `"Cursor"`
+  - `"GitHub Copilot"`
+</ParamField>
+
+<ParamField path="skillsDir" type="string" required>
+  Relative path where skills are installed in project scope.
+  
+  **Examples:**
+  - `.claude/skills` - Claude Code
+  - `.agents/skills` - Universal agents (Cursor, OpenCode, etc.)
+  - `skills` - OpenClaw (no dot prefix)
+  
+  <Info>
+    This path is relative to the current working directory when installing project-scoped skills.
+  </Info>
+</ParamField>
+
+<ParamField path="globalSkillsDir" type="string | undefined" required>
+  Absolute path where global skills are installed (typically in user's home directory).
+  
+  Set to `undefined` if the agent doesn't support global installation.
+  
+  **Examples:**
+  - `~/.claude/skills` - Claude Code global skills
+  - `~/.config/opencode/skills` - OpenCode global skills
+  - `~/.codeium/windsurf/skills` - Windsurf global skills
+  
+  <Tip>
+    Use `join(home, '.agent/skills')` or `join(configHome, 'agent/skills')` to construct platform-independent paths.
+  </Tip>
+</ParamField>
+
+<ParamField path="detectInstalled" type="() => Promise<boolean>" required>
+  Async function that returns `true` if the agent is installed on the system.
+  
+  **Common detection strategies:**
+  - Check if config directory exists: `existsSync(join(home, '.agent'))`
+  - Check for project marker file: `existsSync(join(cwd(), '.replit'))`
+  - Check multiple possible locations (OpenClaw supports 3 legacy paths)
+  
+  **Example implementation:**
+  ```typescript
+  detectInstalled: async () => {
+    return existsSync(join(home, '.claude'));
+  }
+  ```
+</ParamField>
+
+<ParamField path="showInUniversalList" type="boolean" default={true}>
+  Whether to show this agent in the universal agents list.
+  
+  Set to `false` for:
+  - Agents that shouldn't be auto-selected (e.g., `universal` meta-agent)
+  - Platform-specific agents (e.g., Replit)
+  
+  **Example:**
+  ```typescript
+  showInUniversalList: false
+  ```
+</ParamField>
+
+## Agent Types
+
+All supported agent identifiers are defined in the `AgentType` union type:
+
+```typescript
+export type AgentType =
+  | 'amp'
+  | 'antigravity'
+  | 'augment'
+  | 'claude-code'
+  | 'openclaw'
+  | 'cline'
+  | 'codebuddy'
+  | 'codex'
+  | 'command-code'
+  | 'continue'
+  // ... 42+ agents total
+  | 'universal';
+```
+
+<Tip>
+  See `src/types.ts` for the complete list of supported agent types.
+</Tip>
+
+## Agent Registry
+
+All agent configurations are stored in the `agents` object in `src/agents.ts`:
+
+```typescript
+export const agents: Record<AgentType, AgentConfig> = {
+  'claude-code': {
+    name: 'claude-code',
+    displayName: 'Claude Code',
+    skillsDir: '.claude/skills',
+    globalSkillsDir: join(claudeHome, 'skills'),
+    detectInstalled: async () => {
+      return existsSync(claudeHome);
+    },
+  },
+  // ... more agents
+};
+```
+
+## Universal Agents
+
+Some agents share a common skills directory (`.agents/skills/`). These are called "universal agents":
+
+- Amp
+- Cline
+- Codex
+- Cursor
+- Gemini CLI
+- GitHub Copilot
+- Kimi Code CLI
+- OpenCode
+- Replit
+
+**Benefits:**
+- No symlinks needed between agents
+- Single installation serves multiple agents
+- Easier to manage and update
+
+**Helper functions:**
+
+```typescript
+// Get all universal agents
+const universalAgents = getUniversalAgents();
+
+// Check if an agent is universal
+const isUniversal = isUniversalAgent('cursor'); // true
+
+// Get non-universal agents (need symlinks)
+const nonUniversal = getNonUniversalAgents();
+```
+
+## Agent Detection
+
+The CLI automatically detects which agents are installed:
+
+```typescript
+const installedAgents = await detectInstalledAgents();
+// Returns: ['claude-code', 'cursor', 'opencode']
+```
+
+**Detection flow:**
+
+<Steps>
+  <Step title="Iterate all agents">
+    Check each agent's `detectInstalled()` function.
+  </Step>
+  
+  <Step title="Run in parallel">
+    All detection checks run concurrently using `Promise.all()`.
+  </Step>
+  
+  <Step title="Filter results">
+    Return only agents where `detectInstalled()` returned `true`.
+  </Step>
+</Steps>
+
+## Environment Variables
+
+Some agents support custom configuration paths via environment variables:
+
+<ParamField path="CLAUDE_CONFIG_DIR" type="string">
+  Custom Claude Code config directory.
+  
+  **Default:** `~/.claude`
+  
+  **Example:**
+  ```bash
+  export CLAUDE_CONFIG_DIR=~/my-custom-claude
+  npx skills add owner/repo -a claude-code
+  ```
+</ParamField>
+
+<ParamField path="CODEX_HOME" type="string">
+  Custom Codex home directory.
+  
+  **Default:** `~/.codex`
+  
+  **Example:**
+  ```bash
+  export CODEX_HOME=~/my-custom-codex
+  npx skills add owner/repo -a codex
+  ```
+</ParamField>
+
+## Platform Differences
+
+The agent system handles platform-specific path differences:
+
+### XDG Base Directory
+
+On Linux/macOS, some agents follow the XDG Base Directory specification:
+
+```typescript
+import { xdgConfig } from 'xdg-basedir';
+
+const configHome = xdgConfig ?? join(home, '.config');
+
+// OpenCode uses XDG config
+globalSkillsDir: join(configHome, 'opencode/skills')
+```
+
+**Agents using XDG:**
+- OpenCode: `~/.config/opencode/skills/`
+- Goose: `~/.config/goose/skills/`
+- Amp: `~/.config/amp/skills/`
+- Crush: `~/.config/crush/skills/`
+
+### Windows Compatibility
+
+Paths work across platforms using Node's `path` module:
+
+```typescript
+import { join } from 'path';
+
+// Works on Windows and Unix
+const skillsPath = join(home, '.claude', 'skills');
+```
+
+## Adding a New Agent
+
+To add support for a new agent:
+
+<Steps>
+  <Step title="Add to AgentType">
+    Edit `src/types.ts` and add your agent to the `AgentType` union:
+    ```typescript
+    export type AgentType =
+      | 'existing-agent'
+      | 'my-new-agent'
+      | ...;
+    ```
+  </Step>
+  
+  <Step title="Add configuration">
+    Edit `src/agents.ts` and add your agent config:
+    ```typescript
+    'my-new-agent': {
+      name: 'my-new-agent',
+      displayName: 'My New Agent',
+      skillsDir: '.myagent/skills',
+      globalSkillsDir: join(home, '.myagent/skills'),
+      detectInstalled: async () => {
+        return existsSync(join(home, '.myagent'));
+      },
+    },
+    ```
+  </Step>
+  
+  <Step title="Validate">
+    Run the validation script:
+    ```bash
+    pnpm run -C scripts validate-agents.ts
+    ```
+  </Step>
+  
+  <Step title="Sync to README">
+    Update documentation:
+    ```bash
+    pnpm run -C scripts sync-agents.ts
+    ```
+  </Step>
+  
+  <Step title="Test">
+    Test installation:
+    ```bash
+    pnpm dev add vercel-labs/agent-skills --agent my-new-agent
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  See the [Contributing Guide](/resources/contributing#adding-a-new-agent) for detailed instructions.
+</Tip>
+
+## Agent-Specific Notes
+
+<AccordionGroup>
+  <Accordion title="OpenClaw" icon="paw">
+    OpenClaw supports three legacy directory names:
+    
+    ```typescript
+    export function getOpenClawGlobalSkillsDir() {
+      if (existsSync(join(home, '.openclaw'))) {
+        return join(home, '.openclaw/skills');
+      }
+      if (existsSync(join(home, '.clawdbot'))) {
+        return join(home, '.clawdbot/skills');
+      }
+      if (existsSync(join(home, '.moltbot'))) {
+        return join(home, '.moltbot/skills');
+      }
+      return join(home, '.openclaw/skills');
+    }
+    ```
+    
+    This ensures backwards compatibility with older installations.
+  </Accordion>
+  
+  <Accordion title="Kiro CLI" icon="circle-info">
+    Kiro CLI requires manual configuration after skill installation:
+    
+    **Edit `.kiro/agents/<agent>.json`:**
+    ```json
+    {
+      "resources": ["skill://.kiro/skills/**/SKILL.md"]
+    }
+    ```
+    
+    This is because Kiro uses a custom resource loading mechanism.
+  </Accordion>
+  
+  <Accordion title="Replit" icon="circle-info">
+    Replit detection looks for `.replit` file:
+    
+    ```typescript
+    detectInstalled: async () => {
+      return existsSync(join(process.cwd(), '.replit'));
+    }
+    ```
+    
+    Also has `showInUniversalList: false` since it's platform-specific.
+  </Accordion>
+  
+  <Accordion title="Universal Meta-Agent" icon="circle-info">
+    The `universal` agent is a meta-agent that never detects as installed:
+    
+    ```typescript
+    universal: {
+      name: 'universal',
+      displayName: 'Universal',
+      skillsDir: '.agents/skills',
+      globalSkillsDir: join(configHome, 'agents/skills'),
+      showInUniversalList: false,
+      detectInstalled: async () => false,
+    }
+    ```
+    
+    It represents the shared `.agents/skills/` directory used by universal agents.
+  </Accordion>
+</AccordionGroup>
+
+## Utility Functions
+
+### `getAgentConfig(type: AgentType): AgentConfig`
+
+Get configuration for a specific agent:
+
+```typescript
+const config = getAgentConfig('claude-code');
+console.log(config.displayName); // "Claude Code"
+```
+
+### `getUniversalAgents(): AgentType[]`
+
+Get all agents using `.agents/skills/` directory:
+
+```typescript
+const universal = getUniversalAgents();
+// ['amp', 'cline', 'codex', 'cursor', ...]
+```
+
+### `getNonUniversalAgents(): AgentType[]`
+
+Get agents with custom skill directories:
+
+```typescript
+const nonUniversal = getNonUniversalAgents();
+// ['claude-code', 'windsurf', 'goose', ...]
+```
+
+### `isUniversalAgent(type: AgentType): boolean`
+
+Check if an agent uses universal directory:
+
+```typescript
+if (isUniversalAgent('cursor')) {
+  console.log('No symlink needed');
+}
+```
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="CLI Options" icon="terminal" href="/api/cli-options">
+    Learn how to target specific agents
+  </Card>
+  
+  <Card title="Compatibility" icon="check" href="/resources/compatibility">
+    Agent feature compatibility matrix
+  </Card>
+  
+  <Card title="Contributing" icon="code-pull-request" href="/resources/contributing">
+    How to add a new agent
+  </Card>
+  
+  <Card title="Skill Format" icon="file-code" href="/api/skill-format">
+    SKILL.md format specification
+  </Card>
+</CardGroup>

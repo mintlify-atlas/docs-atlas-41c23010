@@ -1,0 +1,277 @@
+---
+title: Creating Skills
+description: Learn how to create custom agent skills for your projects and teams
+---
+
+Skills are directories containing a `SKILL.md` file with YAML frontmatter. Creating your own skills is straightforward and lets you codify team knowledge, workflows, and best practices.
+
+## Quick Start
+
+Create a new skill template:
+
+```bash
+# Create SKILL.md in current directory
+npx skills init
+
+# Create a new skill in a subdirectory
+npx skills init my-skill
+```
+
+## Skill Structure
+
+Every skill requires a `SKILL.md` file with YAML frontmatter:
+
+```markdown
+---
+name: my-skill
+description: What this skill does and when to use it
+---
+
+# My Skill
+
+Instructions for the agent to follow when this skill is activated.
+
+## When to Use
+
+Describe the scenarios where this skill should be used.
+
+## Steps
+
+1. First, do this
+2. Then, do that
+```
+
+### Required Fields
+
+<ParamField path="name" type="string" required>
+  Unique identifier for the skill. Use lowercase with hyphens (e.g., `my-skill`, `pr-review`).
+</ParamField>
+
+<ParamField path="description" type="string" required>
+  Brief explanation of what the skill does and when to use it. This helps agents understand when to automatically activate the skill based on the user's request.
+</ParamField>
+
+### Optional Fields
+
+<ParamField path="metadata.internal" type="boolean">
+  Set to `true` to hide the skill from normal discovery. Internal skills are only visible and installable when `INSTALL_INTERNAL_SKILLS=1` is set. Useful for work-in-progress skills or skills meant only for internal tooling.
+</ParamField>
+
+### Example: Internal Skill
+
+```markdown
+---
+name: my-internal-skill
+description: An internal skill not shown by default
+metadata:
+  internal: true
+---
+
+# Internal Skill
+
+This skill is hidden from public discovery.
+```
+
+## Skill Discovery Locations
+
+The CLI searches for skills in these locations within a repository (in priority order):
+
+1. **Root directory** - if it contains `SKILL.md`
+2. **Common skill directories:**
+   - `skills/`
+   - `skills/.curated/`
+   - `skills/.experimental/`
+   - `skills/.system/`
+3. **Agent-specific directories:**
+   - `.agents/skills/`
+   - `.agent/skills/`
+   - `.augment/skills/`
+   - `.claude/skills/`
+   - `.codex/skills/`
+   - `.cursor/skills/`
+   - And many more (see [full list in README](https://github.com/vercel-labs/skills#creating-skills))
+
+<Note>
+If no skills are found in standard locations, a recursive search is performed.
+</Note>
+
+## Plugin Manifest Discovery
+
+If `.claude-plugin/marketplace.json` or `.claude-plugin/plugin.json` exists, skills declared in those files are also discovered:
+
+```json
+// .claude-plugin/marketplace.json
+{
+  "metadata": { "pluginRoot": "./plugins" },
+  "plugins": [
+    {
+      "name": "my-plugin",
+      "source": "my-plugin",
+      "skills": ["./skills/review", "./skills/test"]
+    }
+  ]
+}
+```
+
+This enables compatibility with the [Claude Code plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces) ecosystem.
+
+## Real-World Example
+
+Here's a real skill from the Skills CLI repository:
+
+```markdown
+---
+name: find-skills
+description: Helps users discover and install agent skills when they ask questions like "how do I do X", "find a skill for X", "is there a skill that can...", or express interest in extending capabilities.
+---
+
+# Find Skills
+
+This skill helps you discover and install skills from the open agent skills ecosystem.
+
+## When to Use This Skill
+
+Use this skill when the user:
+
+- Asks "how do I do X" where X might be a common task
+- Says "find a skill for X" or "is there a skill for X"
+- Asks "can you do X" where X is a specialized capability
+- Expresses interest in extending agent capabilities
+
+## How to Help Users Find Skills
+
+### Step 1: Understand What They Need
+
+Identify:
+1. The domain (e.g., React, testing, design)
+2. The specific task (e.g., writing tests, creating animations)
+3. Whether this is a common enough task that a skill likely exists
+
+### Step 2: Search for Skills
+
+Run: `npx skills find [query]`
+
+### Step 3: Present Options
+
+Present the skill name, install command, and link to skills.sh.
+```
+
+## Writing Effective Skills
+
+<AccordionGroup>
+  <Accordion title="Be Specific in Your Description">
+    The description field determines when your skill is activated. Make it clear and specific about the scenarios where the skill should be used.
+    
+    **Good:** "Helps with React performance optimization by identifying common bottlenecks and suggesting React.memo, useMemo, and useCallback usage"
+    
+    **Bad:** "React help"
+  </Accordion>
+  
+  <Accordion title="Provide Clear Instructions">
+    Write step-by-step instructions that are easy to follow. Use numbered lists, code examples, and clear language.
+  </Accordion>
+  
+  <Accordion title="Include Context and Examples">
+    Help the agent understand when and how to apply the skill with real-world examples and context about common scenarios.
+  </Accordion>
+  
+  <Accordion title="Structure Your Content">
+    Use headings, lists, and formatting to make your skill easy to scan and understand:
+    - **When to Use** - Describe triggering scenarios
+    - **Steps** - Provide the workflow
+    - **Examples** - Show concrete use cases
+    - **Tips** - Add helpful notes and best practices
+  </Accordion>
+</AccordionGroup>
+
+## Organizing Multiple Skills
+
+For repositories with many skills, organize them in subdirectories:
+
+```
+my-skills-repo/
+├── skills/
+│   ├── frontend-design/
+│   │   └── SKILL.md
+│   ├── pr-review/
+│   │   └── SKILL.md
+│   └── testing-guide/
+│       └── SKILL.md
+└── README.md
+```
+
+Each subdirectory in `skills/` should contain its own `SKILL.md` file.
+
+## Including Additional Files
+
+Skills can include additional files alongside `SKILL.md`:
+
+```
+my-skill/
+├── SKILL.md
+├── templates/
+│   ├── component.tsx
+│   └── test.spec.ts
+└── docs/
+    └── additional-context.md
+```
+
+These files will be installed along with the skill and can be referenced in the skill instructions.
+
+<Note>
+Files starting with `_` and the `.git` directory are excluded from installation.
+</Note>
+
+## Testing Your Skill
+
+Before publishing, test your skill locally:
+
+```bash
+# Install from local directory
+npx skills add ./my-skill
+
+# Install specific skill from local repo
+npx skills add ./my-skills-repo --skill my-skill
+
+# List to verify installation
+npx skills list
+```
+
+## Publishing Your Skill
+
+Skills are distributed via git repositories. To share your skill:
+
+1. **Create a git repository** (GitHub, GitLab, etc.)
+2. **Add your skill(s)** to the repository
+3. **Commit and push** to the remote
+4. **Share the repository URL** or GitHub shorthand
+
+Users can then install with:
+
+```bash
+npx skills add <owner>/<repo>
+npx skills add <owner>/<repo>@<skill-name>
+```
+
+## Environment Variables for Development
+
+When developing skills marked as internal:
+
+```bash
+# Show internal skills in search and list
+export INSTALL_INTERNAL_SKILLS=1
+
+# List internal skills
+npx skills add vercel-labs/agent-skills --list
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Source Formats" icon="code" href="/guides/source-formats">
+    Learn about all supported installation sources
+  </Card>
+  <Card title="Supported Agents" icon="robot" href="/guides/supported-agents">
+    See which agents support your skills
+  </Card>
+</CardGroup>

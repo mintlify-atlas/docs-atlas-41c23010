@@ -1,0 +1,300 @@
+---
+title: 'skills check'
+description: 'Check for available skill updates'
+---
+
+## Usage
+
+```bash
+skills check
+```
+
+## Description
+
+The `check` command compares your installed skills against the latest versions on GitHub to identify available updates. It uses GitHub's Trees API to detect changes in skill folders without downloading files.
+
+<Note>
+  Only **global skills** installed with `-g` are tracked for updates. Project-scoped skills are not checked.
+</Note>
+
+## How It Works
+
+<Steps>
+
+<Step title="Read Lock File">
+  Reads `~/.agents/.skill-lock.json` to get installed skill information including:
+  - Skill source (owner/repo)
+  - Skill path in repository
+  - Current folder hash (GitHub tree SHA)
+</Step>
+
+<Step title="Fetch Latest Hashes">
+  For each skill, fetches the latest folder hash from GitHub using the Trees API.
+  
+  The hash represents the entire skill folder's state, so any change (files added, modified, or deleted) will result in a different hash.
+</Step>
+
+<Step title="Compare Versions">
+  Compares current hash with latest hash:
+  - **Match**: Skill is up to date
+  - **Different**: Update available
+</Step>
+
+<Step title="Report Results">
+  Shows:
+  - Skills with updates available
+  - Skills that are up to date
+  - Skills that couldn't be checked (errors)
+  - Skills skipped (local paths, no version tracking)
+</Step>
+
+</Steps>
+
+## Update Detection
+
+Updates are detected by comparing GitHub tree SHAs:
+
+```
+Current hash:  abc123... (from lock file)
+Latest hash:   def456... (from GitHub API)
+Result:        Update available
+```
+
+This approach:
+- ✅ Detects any changes to skill files
+- ✅ Works without downloading files
+- ✅ Leverages GitHub's caching
+- ✅ Supports authenticated requests (higher rate limits)
+
+## GitHub Token
+
+To avoid rate limits, set a GitHub personal access token:
+
+```bash
+export GITHUB_TOKEN=ghp_your_token_here
+skills check
+```
+
+The CLI will automatically use the token for GitHub API requests, providing:
+- **Higher rate limits**: 5,000 requests/hour (vs 60 for unauthenticated)
+- **Access to private repositories**: If your skills are in private repos
+
+## Output Examples
+
+<CodeGroup>
+
+```bash All Up to Date
+$ skills check
+
+Checking for skill updates...
+
+Checking 5 skill(s) for updates...
+
+✓ All skills are up to date
+```
+
+```bash Updates Available
+$ skills check
+
+Checking for skill updates...
+
+Checking 5 skill(s) for updates...
+
+3 update(s) available:
+
+  ↑ frontend-design
+    source: vercel-labs/agent-skills
+  ↑ web-design-guidelines
+    source: vercel-labs/agent-skills
+  ↑ skill-creator
+    source: vercel-labs/agent-skills
+
+Run npx skills update to update all skills
+```
+
+```bash With Errors
+$ skills check
+
+Checking for skill updates...
+
+Checking 5 skill(s) for updates...
+
+1 update(s) available:
+
+  ↑ frontend-design
+    source: vercel-labs/agent-skills
+
+Could not check 2 skill(s) (may need reinstall)
+```
+
+```bash Skipped Skills
+$ skills check
+
+Checking for skill updates...
+
+Checking 3 skill(s) for updates...
+
+✓ All skills are up to date
+
+2 skill(s) cannot be checked automatically:
+  • my-local-skill (Local path)
+    To update: npx skills add ./path/to/skill -g -y
+  • git-skill (Git URL - hash tracking not supported)
+    To update: npx skills add https://git.example.com/repo -g -y
+```
+
+</CodeGroup>
+
+## Skills Not Checked
+
+Some skills cannot be checked automatically:
+
+<AccordionGroup>
+  <Accordion title="Local Paths" icon="folder">
+    Skills installed from local paths (`./my-skill`) cannot be checked for updates.
+    
+    **Reason:** No remote source to compare against
+    
+    **Manual update:**
+    ```bash
+    npx skills add ./my-skill -g -y
+    ```
+  </Accordion>
+  
+  <Accordion title="Git URLs" icon="git">
+    Skills from non-GitHub Git URLs don't support hash tracking yet.
+    
+    **Reason:** Trees API is GitHub-specific
+    
+    **Manual update:**
+    ```bash
+    npx skills add https://git.example.com/repo -g -y
+    ```
+  </Accordion>
+  
+  <Accordion title="No Version Hash" icon="question">
+    Skills installed before lock file v3 don't have folder hashes.
+    
+    **Reason:** Lock file was upgraded, missing metadata
+    
+    **Fix:** Reinstall the skill
+    ```bash
+    npx skills add owner/repo@skill -g -y
+    ```
+  </Accordion>
+  
+  <Accordion title="Missing Skill Path" icon="map">
+    Skills without a recorded path in the lock file.
+    
+    **Reason:** Lock file corruption or old format
+    
+    **Fix:** Reinstall the skill
+    ```bash
+    npx skills add owner/repo@skill -g -y
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Lock File Format
+
+The check command requires lock file version 3 (current):
+
+```json
+{
+  "version": 3,
+  "skills": {
+    "frontend-design": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/agent-skills",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "skillFolderHash": "abc123...",
+      "installedAt": "2024-01-15T10:30:00Z",
+      "updatedAt": "2024-01-15T10:30:00Z"
+    }
+  }
+}
+```
+
+Key fields for update checking:
+- `source`: Owner/repo format
+- `skillPath`: Path to SKILL.md in repository
+- `skillFolderHash`: GitHub tree SHA for the skill folder
+
+## Rate Limiting
+
+### Without Token
+- **Limit**: 60 requests per hour (per IP)
+- **Scope**: All unauthenticated GitHub API requests
+
+### With Token
+- **Limit**: 5,000 requests per hour
+- **Scope**: Per authenticated user
+
+**Best practice:** Set `GITHUB_TOKEN` if you have many skills or check frequently.
+
+## Comparison with Update
+
+The `check` and `update` commands work together:
+
+| Command | Purpose | Action |
+|---------|---------|--------|
+| `skills check` | Find updates | Read-only, shows what's available |
+| `skills update` | Install updates | Checks AND reinstalls updated skills |
+
+**Workflow:**
+```bash
+# Step 1: Check what needs updating
+skills check
+
+# Step 2: Apply updates
+skills update
+```
+
+Or just run `skills update` directly - it checks first automatically.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Rate limit exceeded" icon="triangle-exclamation">
+    **Error:** `API rate limit exceeded`
+    
+    **Solution:** Set a GitHub token
+    ```bash
+    export GITHUB_TOKEN=ghp_your_token
+    skills check
+    ```
+  </Accordion>
+  
+  <Accordion title="No skills tracked" icon="circle-info">
+    **Message:** `No skills tracked in lock file`
+    
+    **Cause:** No global skills installed, or lock file missing
+    
+    **Solution:** Install skills with `-g` flag
+    ```bash
+    skills add vercel-labs/agent-skills -g
+    ```
+  </Accordion>
+  
+  <Accordion title="Could not fetch from GitHub" icon="globe">
+    **Message:** `Could not check N skill(s)`
+    
+    **Causes:**
+    - Network issues
+    - Repository deleted or moved
+    - Private repository without token
+    - Skill path changed in repository
+    
+    **Solution:** Try reinstalling
+    ```bash
+    skills add owner/repo@skill -g -y
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related Commands
+
+- [`skills update`](/commands/update) - Update all skills to latest versions
+- [`skills add`](/commands/add) - Install skills (use with `-g -y` to reinstall)
+- [`skills list`](/commands/list) - List installed skills

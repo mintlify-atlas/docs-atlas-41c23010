@@ -1,0 +1,228 @@
+---
+title: Supported Agents
+description: Complete list of coding agents that support the Skills CLI
+---
+
+The Skills CLI supports over 40 coding agents. Each agent can install skills to project-level and/or global directories.
+
+## Agent Detection
+
+The CLI automatically detects which coding agents you have installed by checking for their configuration directories. If no agents are detected, you'll be prompted to select which agents to install skills for.
+
+## All Supported Agents
+
+The following agents support the Skills CLI. The table shows the `--agent` flag value, project and global installation paths, and other key details.
+
+<Note>
+Project paths are relative to your current directory. Global paths are typically in your home directory (`~`).
+</Note>
+
+### Complete Agent List
+
+| Agent | `--agent` Flag | Project Path | Global Path | Detection Path |
+|-------|---------------|--------------|-------------|----------------|
+| **OpenCode** | `opencode` | `.agents/skills/` | `~/.config/opencode/skills/` | `~/.config/opencode` |
+| **Claude Code** | `claude-code` | `.claude/skills/` | `~/.claude/skills/` | `~/.claude/` |
+| **Codex** | `codex` | `.agents/skills/` | `~/.codex/skills/` | `~/.codex/` or `/etc/codex` |
+| **Cursor** | `cursor` | `.agents/skills/` | `~/.cursor/skills/` | `~/.cursor/` |
+| **Cline** | `cline` | `.agents/skills/` | `~/.agents/skills/` | `~/.cline/` |
+| **OpenHands** | `openhands` | `.openhands/skills/` | `~/.openhands/skills/` | `~/.openhands/` |
+| **Roo Code** | `roo` | `.roo/skills/` | `~/.roo/skills/` | `~/.roo/` |
+| **Windsurf** | `windsurf` | `.windsurf/skills/` | `~/.codeium/windsurf/skills/` | `~/.codeium/windsurf/` |
+| **Goose** | `goose` | `.goose/skills/` | `~/.config/goose/skills/` | `~/.config/goose/` |
+| **Continue** | `continue` | `.continue/skills/` | `~/.continue/skills/` | `./.continue/` or `~/.continue/` |
+| **Amp** | `amp` | `.agents/skills/` | `~/.config/agents/skills/` | `~/.config/amp` |
+| **Kimi Code CLI** | `kimi-cli` | `.agents/skills/` | `~/.config/agents/skills/` | `~/.kimi` |
+| **Replit** | `replit` | `.agents/skills/` | `~/.config/agents/skills/` | `./.replit` |
+| **Antigravity** | `antigravity` | `.agent/skills/` | `~/.gemini/antigravity/skills/` | `~/.gemini/antigravity` |
+| **Augment** | `augment` | `.augment/skills/` | `~/.augment/skills/` | `~/.augment` |
+| **OpenClaw** | `openclaw` | `skills/` | `~/.openclaw/skills/` | `~/.openclaw`, `~/.clawdbot`, or `~/.moltbot` |
+| **CodeBuddy** | `codebuddy` | `.codebuddy/skills/` | `~/.codebuddy/skills/` | `./.codebuddy/` or `~/.codebuddy/` |
+| **Command Code** | `command-code` | `.commandcode/skills/` | `~/.commandcode/skills/` | `~/.commandcode/` |
+| **Cortex Code** | `cortex` | `.cortex/skills/` | `~/.snowflake/cortex/skills/` | `~/.snowflake/cortex/` |
+| **Crush** | `crush` | `.crush/skills/` | `~/.config/crush/skills/` | `~/.config/crush/` |
+| **Droid** | `droid` | `.factory/skills/` | `~/.factory/skills/` | `~/.factory/` |
+| **Gemini CLI** | `gemini-cli` | `.agents/skills/` | `~/.gemini/skills/` | `~/.gemini/` |
+| **GitHub Copilot** | `github-copilot` | `.agents/skills/` | `~/.copilot/skills/` | `~/.copilot/` |
+| **Junie** | `junie` | `.junie/skills/` | `~/.junie/skills/` | `~/.junie/` |
+| **iFlow CLI** | `iflow-cli` | `.iflow/skills/` | `~/.iflow/skills/` | `~/.iflow/` |
+| **Kilo Code** | `kilo` | `.kilocode/skills/` | `~/.kilocode/skills/` | `~/.kilocode/` |
+| **Kiro CLI** | `kiro-cli` | `.kiro/skills/` | `~/.kiro/skills/` | `~/.kiro/` |
+| **Kode** | `kode` | `.kode/skills/` | `~/.kode/skills/` | `~/.kode/` |
+| **MCPJam** | `mcpjam` | `.mcpjam/skills/` | `~/.mcpjam/skills/` | `~/.mcpjam/` |
+| **Mistral Vibe** | `mistral-vibe` | `.vibe/skills/` | `~/.vibe/skills/` | `~/.vibe/` |
+| **Mux** | `mux` | `.mux/skills/` | `~/.mux/skills/` | `~/.mux/` |
+| **Pi** | `pi` | `.pi/skills/` | `~/.pi/agent/skills/` | `~/.pi/agent` |
+| **Qoder** | `qoder` | `.qoder/skills/` | `~/.qoder/skills/` | `~/.qoder/` |
+| **Qwen Code** | `qwen-code` | `.qwen/skills/` | `~/.qwen/skills/` | `~/.qwen/` |
+| **Trae** | `trae` | `.trae/skills/` | `~/.trae/skills/` | `~/.trae/` |
+| **Trae CN** | `trae-cn` | `.trae/skills/` | `~/.trae-cn/skills/` | `~/.trae-cn/` |
+| **Zencoder** | `zencoder` | `.zencoder/skills/` | `~/.zencoder/skills/` | `~/.zencoder/` |
+| **Neovate** | `neovate` | `.neovate/skills/` | `~/.neovate/skills/` | `~/.neovate/` |
+| **Pochi** | `pochi` | `.pochi/skills/` | `~/.pochi/skills/` | `~/.pochi/` |
+| **AdaL** | `adal` | `.adal/skills/` | `~/.adal/skills/` | `~/.adal/` |
+| **Universal** | `universal` | `.agents/skills/` | `~/.config/agents/skills/` | Never detected (manual only) |
+
+## Universal Agents
+
+Some agents natively use the `.agents/skills/` directory, which eliminates the need for symlinks in project installations:
+
+- **OpenCode**
+- **Codex**
+- **Cursor**
+- **Cline**
+- **Amp**
+- **Kimi Code CLI**
+- **Gemini CLI**
+- **GitHub Copilot**
+
+For these agents, skills installed to the project are placed directly in `.agents/skills/` with no additional symlinks needed.
+
+## Installing to Specific Agents
+
+Use the `--agent` or `-a` flag to target specific agents:
+
+```bash
+# Install to Claude Code only
+npx skills add vercel-labs/agent-skills -a claude-code
+
+# Install to multiple agents
+npx skills add vercel-labs/agent-skills -a claude-code -a cursor
+
+# Install to all agents
+npx skills add vercel-labs/agent-skills --agent '*'
+```
+
+## Feature Compatibility
+
+While skills follow a shared [Agent Skills specification](https://agentskills.io), some advanced features are agent-specific:
+
+| Feature | OpenCode | OpenHands | Claude Code | Cline | CodeBuddy | Codex | Command Code | Kiro CLI | Cursor | Antigravity | Roo Code | GitHub Copilot | Amp | OpenClaw | Neovate | Pi | Qoder | Zencoder |
+|---------|----------|-----------|-------------|-------|-----------|-------|--------------|----------|--------|-------------|----------|----------------|-----|----------|---------|----|----|----------|
+| **Basic skills** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **`allowed-tools`** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
+| **`context: fork`** | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| **Hooks** | ✗ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+### Feature Descriptions
+
+<AccordionGroup>
+  <Accordion title="Basic Skills">
+    Standard `SKILL.md` files with name, description, and instructions. Supported by all agents.
+  </Accordion>
+  
+  <Accordion title="allowed-tools">
+    Frontmatter field that restricts which tools the agent can use when the skill is active. Helps enforce workflow constraints.
+    
+    Example:
+    ```yaml
+    ---
+    name: my-skill
+    description: A skill with tool restrictions
+    allowed-tools: [read, write, bash]
+    ---
+    ```
+  </Accordion>
+  
+  <Accordion title="context: fork">
+    Claude Code-specific feature that creates a forked conversation context. Useful for exploratory tasks that shouldn't affect the main conversation.
+  </Accordion>
+  
+  <Accordion title="Hooks">
+    Lifecycle hooks that run before/after skill activation. Currently supported by Claude Code and Cline.
+  </Accordion>
+</AccordionGroup>
+
+## Special Notes for Specific Agents
+
+### Kiro CLI
+
+After installing skills with the Skills CLI, you must manually add them to your custom agent's configuration:
+
+```json
+// .kiro/agents/<agent>.json
+{
+  "resources": [
+    "skill://.kiro/skills/**/SKILL.md"
+  ]
+}
+```
+
+### OpenClaw
+
+OpenClaw has multiple legacy directory names. The CLI checks for:
+- `~/.openclaw` (current)
+- `~/.clawdbot` (legacy)
+- `~/.moltbot` (legacy)
+
+### Codex
+
+Codex can be configured with the `CODEX_HOME` environment variable. The CLI respects this configuration:
+
+```bash
+export CODEX_HOME=/custom/path
+npx skills add vercel-labs/agent-skills -g
+# Skills installed to /custom/path/skills
+```
+
+### Claude Code
+
+Claude Code respects the `CLAUDE_CONFIG_DIR` environment variable:
+
+```bash
+export CLAUDE_CONFIG_DIR=/custom/claude/config
+npx skills add vercel-labs/agent-skills -g
+# Skills installed to /custom/claude/config/skills
+```
+
+## Agent Documentation Links
+
+For agent-specific skill documentation:
+
+- [Amp Skills Documentation](https://ampcode.com/manual#agent-skills)
+- [Antigravity Skills Documentation](https://antigravity.google/docs/skills)
+- [Claude Code Skills Documentation](https://code.claude.com/docs/en/skills)
+- [Cline Skills Documentation](https://docs.cline.bot/features/skills)
+- [CodeBuddy Skills Documentation](https://www.codebuddy.ai/docs/ide/Features/Skills)
+- [Codex Skills Documentation](https://developers.openai.com/codex/skills)
+- [Command Code Skills Documentation](https://commandcode.ai/docs/skills)
+- [Crush Skills Documentation](https://github.com/charmbracelet/crush?tab=readme-ov-file#agent-skills)
+- [Cursor Skills Documentation](https://cursor.com/docs/context/skills)
+- [Factory AI / Droid Skills Documentation](https://docs.factory.ai/cli/configuration/skills)
+- [Gemini CLI Skills Documentation](https://geminicli.com/docs/cli/skills/)
+- [GitHub Copilot Agent Skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)
+- [iFlow CLI Skills Documentation](https://platform.iflow.cn/en/cli/examples/skill)
+- [Kimi Code CLI Skills Documentation](https://moonshotai.github.io/kimi-cli/en/customization/skills.html)
+- [Kiro CLI Skills Documentation](https://kiro.dev/docs/cli/custom-agents/configuration-reference/#skill-resources)
+- [Kode Skills Documentation](https://github.com/shareAI-lab/kode/blob/main/docs/skills.md)
+- [OpenClaw Skills Documentation](https://docs.openclaw.ai/tools/skills)
+- [OpenCode Skills Documentation](https://opencode.ai/docs/skills)
+- [OpenHands Skills Documentation](https://docs.openhands.ai/modules/usage/how-to/using-skills)
+- [Pi Skills Documentation](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/skills.md)
+- [Qoder Skills Documentation](https://docs.qoder.com/cli/Skills)
+- [Qwen Code Skills Documentation](https://qwenlm.github.io/qwen-code-docs/en/users/features/skills/)
+- [Replit Skills Documentation](https://docs.replit.com/replitai/skills)
+- [Roo Code Skills Documentation](https://docs.roocode.com/features/skills)
+- [Trae Skills Documentation](https://docs.trae.ai/ide/skills)
+
+## Contributing
+
+To add support for a new agent:
+
+1. Add the agent definition to `src/agents.ts`
+2. Run `pnpm run -C scripts validate-agents.ts` to validate
+3. Run `pnpm run -C scripts sync-agents.ts` to update README.md
+4. Submit a pull request
+
+See the [skills repository](https://github.com/vercel-labs/skills) for contribution guidelines.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation Methods" icon="link" href="/guides/installation-methods">
+    Learn about symlink vs copy installation modes
+  </Card>
+  <Card title="Creating Skills" icon="plus" href="/guides/creating-skills">
+    Create custom skills for your agent
+  </Card>
+</CardGroup>

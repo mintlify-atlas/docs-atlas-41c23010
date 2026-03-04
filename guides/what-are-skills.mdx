@@ -1,0 +1,123 @@
+---
+title: What are Agent Skills?
+description: Learn about agent skills and how they extend your coding agent's capabilities with reusable instruction sets
+---
+
+Agent skills are reusable instruction sets that extend your coding agent's capabilities. They're defined in `SKILL.md` files with YAML frontmatter containing a `name` and `description`.
+
+## Overview
+
+Skills let agents perform specialized tasks that go beyond their base capabilities. By installing skills, you give your agent domain expertise, workflows, and tool integrations that help it work more effectively on specialized tasks.
+
+## What Can Skills Do?
+
+Skills can teach your agent to:
+
+- **Generate release notes** from git history
+- **Create pull requests** following your team's conventions
+- **Integrate with external tools** like Linear, Notion, or other APIs
+- **Follow best practices** for specific frameworks (React, Next.js, etc.)
+- **Automate workflows** like code reviews, testing, or deployment
+- **Apply design patterns** and coding standards to your project
+
+## How Skills Work
+
+Skills are simple directories containing a `SKILL.md` file with instructions for the agent. The agent reads these instructions when activated and applies them to the current task.
+
+### Basic Structure
+
+```markdown
+---
+name: my-skill
+description: What this skill does and when to use it
+---
+
+# My Skill
+
+Instructions for the agent to follow when this skill is activated.
+
+## When to Use
+
+Describe the scenarios where this skill should be used.
+
+## Steps
+
+1. First, do this
+2. Then, do that
+```
+
+### Required Fields
+
+- **`name`**: Unique identifier (lowercase, hyphens allowed)
+- **`description`**: Brief explanation of what the skill does and when to use it
+
+<Note>
+The `description` field is crucial - it helps agents understand when to automatically activate the skill based on the user's request.
+</Note>
+
+## Discovering Skills
+
+The best way to discover available skills is through:
+
+- **[skills.sh](https://skills.sh)** - Official skills directory with searchable catalog
+- **Interactive search** - Run `npx skills find` for an fzf-style search interface
+- **Keyword search** - Run `npx skills find <query>` to search by keyword
+
+### Popular Skill Repositories
+
+- `vercel-labs/agent-skills` - Official skills from Vercel
+- Various community repositories on GitHub
+
+## Installation
+
+Installing a skill is simple:
+
+```bash
+# Install from GitHub shorthand
+npx skills add vercel-labs/agent-skills
+
+# Install specific skills
+npx skills add vercel-labs/agent-skills --skill frontend-design
+
+# Install globally (available across all projects)
+npx skills add vercel-labs/agent-skills -g
+```
+
+See [Installation Methods](/guides/installation-methods) for more details.
+
+## Skill Scopes
+
+Skills can be installed in two scopes:
+
+<CardGroup cols={2}>
+  <Card title="Project" icon="folder">
+    Installed to `./<agent>/skills/` and committed with your repository. Skills are shared with your team.
+  </Card>
+  <Card title="Global" icon="globe">
+    Installed to `~/<agent>/skills/` and available across all projects on your machine.
+  </Card>
+</CardGroup>
+
+## Agent Compatibility
+
+Skills follow a shared [Agent Skills specification](https://agentskills.io), making them generally compatible across agents. However, some advanced features may be agent-specific:
+
+| Feature         | Most Agents | Claude Code |
+| --------------- | ----------- | ----------- |
+| Basic skills    | ✓          | ✓          |
+| `allowed-tools` | ✓          | ✓          |
+| `context: fork` | ✗          | ✓          |
+| Hooks           | ✗          | ✓          |
+
+See [Supported Agents](/guides/supported-agents) for the complete compatibility matrix.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Creating Skills" icon="plus" href="/guides/creating-skills">
+    Learn how to create your own custom skills
+  </Card>
+  <Card title="Source Formats" icon="code" href="/guides/source-formats">
+    Explore all supported installation sources
+  </Card>
+</CardGroup>

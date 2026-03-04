@@ -1,0 +1,159 @@
+---
+title: "Compatibility"
+description: "Agent compatibility matrix for Skills CLI features"
+---
+
+Skills follow the shared [Agent Skills specification](https://agentskills.io), making them generally compatible across different coding agents. However, some advanced features may be agent-specific.
+
+## Feature Compatibility Matrix
+
+This table shows which features are supported by each agent:
+
+<Note>
+  Basic skills (markdown instructions with YAML frontmatter) work across all agents. Advanced features like `allowed-tools`, `context: fork`, and hooks have varying support.
+</Note>
+
+| Feature | Description |
+|---------|-------------|
+| **Basic skills** | Standard SKILL.md files with name, description, and markdown instructions |
+| **`allowed-tools`** | Restrict which tools the agent can use when executing a skill |
+| **`context: fork`** | Run skill in isolated context separate from main conversation |
+| **Hooks** | Lifecycle hooks for skill execution (before, after, error handling) |
+
+### Support by Agent
+
+| Agent | Basic Skills | `allowed-tools` | `context: fork` | Hooks |
+|-------|-------------|-----------------|-----------------|-------|
+| **OpenCode** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **OpenHands** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **Claude Code** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes |
+| **Cline** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="check" /> Yes |
+| **CodeBuddy** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **Codex** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **Command Code** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **Kiro CLI** | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **Cursor** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **Antigravity** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **Roo Code** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **GitHub Copilot** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **Amp** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **OpenClaw** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **Neovate** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **Pi** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **Qoder** | <Icon icon="check" /> Yes | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+| **Zencoder** | <Icon icon="check" /> Yes | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No | <Icon icon="xmark" /> No |
+
+<Info>
+  This compatibility information is based on agent specifications and may change as agents update their implementations. Always check your specific agent's documentation for the most current information.
+</Info>
+
+## Supported Agents
+
+The Skills CLI supports installation to **42+ coding agents**. Each agent has specific project and global installation paths:
+
+### Universal Agents
+
+These agents use the shared `.agents/skills/` directory:
+
+- **Amp** - Universal AI coding assistant
+- **Kimi Code CLI** - Moonshot AI's CLI agent
+- **Replit** - Cloud development environment
+- **Cline** - VS Code extension
+- **Codex** - OpenAI's coding agent
+- **Cursor** - AI-first code editor
+- **Gemini CLI** - Google's CLI coding agent
+- **GitHub Copilot** - GitHub's AI pair programmer
+- **OpenCode** - Open-source coding agent
+
+### Agent-Specific Paths
+
+Other agents use dedicated skills directories. Here are some examples:
+
+| Agent | Project Path | Global Path |
+|-------|--------------|-------------|
+| **Claude Code** | `.claude/skills/` | `~/.claude/skills/` |
+| **OpenClaw** | `skills/` | `~/.openclaw/skills/` |
+| **Windsurf** | `.windsurf/skills/` | `~/.codeium/windsurf/skills/` |
+| **Goose** | `.goose/skills/` | `~/.config/goose/skills/` |
+| **Continue** | `.continue/skills/` | `~/.continue/skills/` |
+| **Roo Code** | `.roo/skills/` | `~/.roo/skills/` |
+
+<Tip>
+  Run `npx skills add <repo>` without flags to see which agents are detected on your system. The CLI automatically detects installed agents.
+</Tip>
+
+### Complete Agent List
+
+For the complete list of supported agents and their paths, see the [README compatibility table](https://github.com/vercel-labs/skills#supported-agents).
+
+## Agent-Specific Notes
+
+<AccordionGroup>
+  <Accordion title="Kiro CLI" icon="circle-info">
+    After installing skills to Kiro CLI, you must manually add them to your custom agent's configuration:
+
+    **Edit `.kiro/agents/<agent>.json`:**
+    ```json
+    {
+      "resources": ["skill://.kiro/skills/**/SKILL.md"]
+    }
+    ```
+
+    This manual step is required for Kiro CLI to discover and load the skills.
+  </Accordion>
+
+  <Accordion title="Replit" icon="circle-info">
+    Replit agent detection looks for `.replit` file in the current directory. Global installation is supported using the shared `.agents/skills/` path.
+  </Accordion>
+
+  <Accordion title="Claude Code" icon="circle-info">
+    Claude Code has the most complete feature support, including:
+    - `allowed-tools` for restricting tool access
+    - `context: fork` for isolated skill execution
+    - Lifecycle hooks (before, after, error handling)
+    - Plugin marketplace compatibility
+  </Accordion>
+
+  <Accordion title="OpenClaw" icon="circle-info">
+    OpenClaw supports three legacy directory names for backwards compatibility:
+    - `~/.openclaw/skills/` (current)
+    - `~/.clawdbot/skills/` (legacy)
+    - `~/.moltbot/skills/` (legacy)
+
+    The CLI automatically detects which one exists on your system.
+  </Accordion>
+</AccordionGroup>
+
+## Custom Configuration Paths
+
+Some agents support custom configuration directories via environment variables:
+
+```bash
+# Claude Code custom config directory
+export CLAUDE_CONFIG_DIR=~/my-custom-claude-dir
+
+# Codex custom home directory  
+export CODEX_HOME=~/my-custom-codex-dir
+```
+
+The Skills CLI respects these environment variables when installing skills.
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Agent Config" icon="gear" href="/api/agent-config">
+    Technical details about agent configuration
+  </Card>
+  
+  <Card title="CLI Options" icon="terminal" href="/api/cli-options">
+    Command-line options for targeting specific agents
+  </Card>
+  
+  <Card title="Troubleshooting" icon="wrench" href="/resources/troubleshooting">
+    Common issues and solutions
+  </Card>
+  
+  <Card title="Skills Directory" icon="globe" href="https://skills.sh">
+    Browse available skills for all agents
+  </Card>
+</CardGroup>

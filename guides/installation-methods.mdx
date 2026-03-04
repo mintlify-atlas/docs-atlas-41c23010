@@ -1,0 +1,265 @@
+---
+title: Installation Methods
+description: Understand how skills are installed and choose the right method for your workflow
+---
+
+The Skills CLI offers two installation methods: **symlink** (recommended) and **copy**. Understanding the differences helps you choose the right approach for your workflow.
+
+## Installation Modes
+
+When installing skills, you can choose between two modes:
+
+<CardGroup cols={2}>
+  <Card title="Symlink (Default)" icon="link">
+    Creates a canonical copy and symlinks to each agent directory. Single source of truth, easy updates.
+  </Card>
+  <Card title="Copy" icon="copy">
+    Creates independent copies for each agent. Use when symlinks aren't supported.
+  </Card>
+</CardGroup>
+
+## Symlink Mode (Recommended)
+
+### How It Works
+
+1. **Canonical copy**: Skills are copied to `.agents/skills/<skill-name>` (or `~/.agents/skills/<skill-name>` for global)
+2. **Symlinks**: Each agent's skill directory symlinks to the canonical location
+3. **Single source**: Updates to the canonical copy automatically apply to all agents
+
+### Directory Structure
+
+```
+Project installation:
+.agents/skills/
+└── my-skill/          # Canonical copy
+    └── SKILL.md
+
+.claude/skills/
+└── my-skill/          # Symlink → .agents/skills/my-skill
+
+.cursor/skills/
+└── my-skill/          # Symlink → .agents/skills/my-skill
+
+Global installation:
+~/.agents/skills/
+└── my-skill/          # Canonical copy
+
+~/.claude/skills/
+└── my-skill/          # Symlink → ~/.agents/skills/my-skill
+
+~/.cursor/skills/
+└── my-skill/          # Symlink → ~/.agents/skills/my-skill
+```
+
+### Benefits
+
+<AccordionGroup>
+  <Accordion title="Single Source of Truth">
+    Skills live in one canonical location (`.agents/skills/`). When you update a skill, all agents see the changes immediately.
+  </Accordion>
+  
+  <Accordion title="Disk Space Efficiency">
+    One copy on disk instead of multiple duplicates saves space, especially for repositories with many skills.
+  </Accordion>
+  
+  <Accordion title="Easy Updates">
+    Run `npx skills update` to update all skills at once. No need to track which agents have which versions.
+  </Accordion>
+  
+  <Accordion title="Team Collaboration">
+    Commit `.agents/skills/` to version control and your team gets consistent skills across all agents.
+  </Accordion>
+</AccordionGroup>
+
+### When to Use
+
+- **Most projects** - Default and recommended for typical use cases
+- **Team collaboration** - When skills should be version-controlled and shared
+- **Active development** - When you're frequently updating skills
+- **Multiple agents** - When using several coding agents on the same machine
+
+### Automatic Fallback
+
+If symlink creation fails (e.g., on some Windows configurations or restricted filesystems), the CLI automatically falls back to copy mode for that installation.
+
+## Copy Mode
+
+### How It Works
+
+1. **Direct copies**: Skills are copied directly to each agent's directory
+2. **Independent**: Each agent has its own copy of the skill
+3. **No symlinks**: Works on any filesystem without symlink support
+
+### Directory Structure
+
+```
+.claude/skills/
+└── my-skill/          # Independent copy
+    └── SKILL.md
+
+.cursor/skills/
+└── my-skill/          # Independent copy
+    └── SKILL.md
+```
+
+### When to Use
+
+- **Restricted filesystems** - When symlinks aren't supported or allowed
+- **Windows (some configs)** - When symlink permissions aren't available
+- **Agent-specific customization** - When you want different versions per agent
+- **Explicit requirement** - When you specifically need independent copies
+
+### Usage
+
+Enable copy mode with the `--copy` flag:
+
+```bash
+# Install with copy mode
+npx skills add vercel-labs/agent-skills --copy
+
+# Install to specific agents with copy mode
+npx skills add vercel-labs/agent-skills -a claude-code --copy
+```
+
+### Trade-offs
+
+<Warning>
+**Disk space:** Each agent gets a full copy, which uses more disk space.
+
+**Updates:** You must update each agent separately. `npx skills update` updates all copies, but they remain independent.
+
+**Consistency:** Skills can drift between agents if you manually edit them.
+</Warning>
+
+## Installation Scopes
+
+Both methods support two installation scopes:
+
+| Scope       | Flag      | Location            | Use Case                                      |
+| ----------- | --------- | ------------------- | --------------------------------------------- |
+| **Project** | (default) | `./<agent>/skills/` | Committed with your project, shared with team |
+| **Global**  | `-g`      | `~/<agent>/skills/` | Available across all projects                 |
+
+### Project Scope (Default)
+
+```bash
+# Install to current project
+npx skills add vercel-labs/agent-skills
+```
+
+- Skills are installed to `.agents/skills/` and `.claude/skills/`, `.cursor/skills/`, etc.
+- Typically committed to version control
+- Team members get the same skills when they clone the repo
+- Isolated per project
+
+### Global Scope
+
+```bash
+# Install globally (user-level)
+npx skills add vercel-labs/agent-skills -g
+```
+
+- Skills are installed to `~/.agents/skills/` and `~/.claude/skills/`, `~/.cursor/skills/`, etc.
+- Available across all projects on your machine
+- Not committed to version control
+- Personal skills or tools you use everywhere
+
+## Universal Agents
+
+Some agents natively use the `.agents/skills/` directory and don't need symlinks:
+
+- OpenCode
+- Codex
+- Cursor
+- Cline
+- Amp
+- Kimi Code CLI
+- Replit
+- Gemini CLI
+- GitHub Copilot
+
+For these agents:
+- **Project installs**: Skills are placed directly in `.agents/skills/`
+- **Global installs**: Skills may still require symlinks from agent-specific directories (e.g., `~/.cursor/skills/` → `~/.config/opencode/skills/`)
+
+## Interactive Installation
+
+When you run `npx skills add` without the `--copy` flag, you'll be prompted to choose:
+
+```
+? How would you like to install skills?
+  ❯ Symlink (Recommended) - Creates symlinks from each agent to a canonical copy.
+    Copy - Creates independent copies for each agent.
+```
+
+Select the mode that best fits your needs.
+
+## Checking Installation
+
+Verify which skills are installed:
+
+```bash
+# List all installed skills
+npx skills list
+
+# List only global skills
+npx skills ls -g
+
+# Filter by specific agents
+npx skills ls -a claude-code -a cursor
+```
+
+The output shows:
+- Skill name and description
+- Installation scope (project or global)
+- Which agents have the skill installed
+
+## Updating Skills
+
+Update all installed skills to the latest versions:
+
+```bash
+# Check for updates
+npx skills check
+
+# Update all skills
+npx skills update
+```
+
+For **symlink mode**, this updates the canonical copy and all agents immediately see the changes.
+
+For **copy mode**, this updates each agent's independent copy separately.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Symlinks not working on Windows">
+    Developer mode or administrator privileges may be required for symlinks on Windows. If you don't have these permissions, use `--copy` mode instead:
+    
+    ```bash
+    npx skills add vercel-labs/agent-skills --copy
+    ```
+  </Accordion>
+  
+  <Accordion title="Permission errors during installation">
+    Ensure you have write access to the target directory. For global installs, you may need appropriate permissions for `~/` directories.
+  </Accordion>
+  
+  <Accordion title="Skills not loading in agent">
+    - Verify installation with `npx skills list`
+    - Check that the skill has valid `SKILL.md` frontmatter
+    - Restart your coding agent to reload skills
+    - Check the agent's documentation for skill loading requirements
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Source Formats" icon="code" href="/guides/source-formats">
+    Learn about all supported installation sources
+  </Card>
+  <Card title="Creating Skills" icon="plus" href="/guides/creating-skills">
+    Create your own custom skills
+  </Card>
+</CardGroup>

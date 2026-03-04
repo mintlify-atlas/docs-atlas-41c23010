@@ -1,0 +1,177 @@
+---
+title: "Troubleshooting"
+description: "Common issues and solutions when using the Skills CLI"
+---
+
+## Common Issues
+
+<AccordionGroup>
+  <Accordion title='"No skills found"' icon="magnifying-glass">
+    This error occurs when the CLI cannot locate any valid `SKILL.md` files in the specified repository or path.
+
+    **Solution:**
+    - Ensure the repository contains `SKILL.md` files with proper YAML frontmatter
+    - Verify that both `name` and `description` fields are present in the frontmatter
+    - Check that the skill files are in one of the [supported locations](/api/skill-format#skill-discovery)
+
+    **Example of valid frontmatter:**
+    ```yaml
+    ---
+    name: my-skill
+    description: A brief description of what this skill does
+    ---
+    ```
+
+    <Tip>Run `npx skills add <repo> --list` to see what skills the CLI can discover</Tip>
+  </Accordion>
+
+  <Accordion title="Skill not loading in agent" icon="triangle-exclamation">
+    If a skill was installed successfully but isn't appearing in your agent, try these steps:
+
+    **Verify installation path:**
+    - Run `npx skills list` to see where the skill was installed
+    - Check that the path matches your agent's expected skills directory
+    - Global skills install to `~/<agent>/skills/` (varies by agent)
+    - Project skills install to `./<agent>/skills/`
+
+    **Check frontmatter validity:**
+    - Open the `SKILL.md` file and verify the YAML frontmatter is valid
+    - Ensure there are no syntax errors (proper indentation, quotes, colons)
+    - Both `name` and `description` must be strings
+
+    **Agent-specific requirements:**
+    - Some agents may require a restart after installing skills
+    - Check your agent's [documentation](/resources/compatibility) for skill loading requirements
+    - Kiro CLI users must manually add skills to `resources` in `.kiro/agents/<agent>.json`
+
+    <Note>
+      **Kiro CLI users:** After installing skills, add them to your custom agent's resources:
+      ```json
+      {
+        "resources": ["skill://.kiro/skills/**/SKILL.md"]
+      }
+      ```
+    </Note>
+  </Accordion>
+
+  <Accordion title="Permission errors" icon="lock">
+    Permission errors typically occur when you don't have write access to the target installation directory.
+
+    **Solution:**
+    - Ensure you have write permissions for the target directory
+    - For global installations (`-g` flag), verify your user can write to `~/<agent>/skills/`
+    - For project installations, ensure you have write access to the current directory
+    - On Unix systems, check permissions with: `ls -la <path>`
+
+    **If using symlinks (default method):**
+    - Some file systems don't support symlinks (e.g., Windows without Developer Mode)
+    - Use `--copy` flag to copy files instead: `npx skills add <repo> --copy`
+  </Accordion>
+
+  <Accordion title="Update check failures" icon="rotate">
+    When `npx skills check` or `npx skills update` fails, it's usually due to:
+
+    **Skills installed from local paths:**
+    - Local skills cannot be checked for updates automatically
+    - You'll see a message: "Skipped (Local path)"
+    - Manually reinstall to update: `npx skills add <path> -g -y`
+
+    **Skills with no version tracking:**
+    - Older skills installed before lock file v3 may not have version hashes
+    - Reinstall the skill to enable update tracking
+
+    **GitHub API rate limits:**
+    - Set a GitHub token to increase rate limits:
+      ```bash
+      export GITHUB_TOKEN=your_token_here
+      ```
+    - Or use GitHub CLI: `gh auth login`
+  </Accordion>
+
+  <Accordion title="Symlink vs Copy issues" icon="link">
+    Understanding when to use symlinks vs copying:
+
+    **Symlinks (default, recommended):**
+    - Creates a single canonical copy in `.agents/skills/`
+    - Links from agent-specific directories point to canonical copy
+    - Easier to update (single source of truth)
+    - Not supported on all file systems
+
+    **Copy mode (`--copy` flag):**
+    - Creates independent copies for each agent
+    - Use when symlinks aren't supported
+    - Each agent gets its own copy of the skill
+
+    **When to use copy:**
+    - Windows without Developer Mode enabled
+    - File systems that don't support symlinks
+    - When you need agent-specific skill customization
+
+    <Tip>Run `npx skills add <repo> --copy` to use copy mode</Tip>
+  </Accordion>
+
+  <Accordion title="Skill name conflicts" icon="clone">
+    If multiple skills have the same `name` in their frontmatter:
+
+    - The CLI will skip duplicate names and only install the first one found
+    - Check skill names with: `npx skills add <repo> --list`
+    - Use the `--skill` flag to install a specific skill by name
+
+    **For skill authors:**
+    - Ensure your skill names are unique within your repository
+    - Use descriptive, kebab-case names: `my-awesome-skill`
+  </Accordion>
+
+  <Accordion title="Internal skills not visible" icon="eye-slash">
+    Skills marked as `internal: true` are hidden by default.
+
+    **To view and install internal skills:**
+    ```bash
+    INSTALL_INTERNAL_SKILLS=1 npx skills add <repo> --list
+    ```
+
+    **Why are skills marked internal?**
+    - Work-in-progress skills
+    - Internal tooling not meant for public use
+    - Experimental features under development
+
+    <Warning>
+      Internal skills may change or break without notice. Use with caution.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+## Environment Variables
+
+The Skills CLI respects these environment variables:
+
+| Variable | Description |
+|----------|-------------|
+| `INSTALL_INTERNAL_SKILLS` | Set to `1` or `true` to show and install skills marked as `internal: true` |
+| `DISABLE_TELEMETRY` | Set to disable anonymous usage telemetry |
+| `DO_NOT_TRACK` | Alternative way to disable telemetry |
+| `GITHUB_TOKEN` | GitHub personal access token for higher API rate limits |
+| `CLAUDE_CONFIG_DIR` | Custom Claude Code config directory (default: `~/.claude`) |
+| `CODEX_HOME` | Custom Codex home directory (default: `~/.codex`) |
+
+## Getting Help
+
+If you're still experiencing issues:
+
+<CardGroup cols={2}>
+  <Card title="View Examples" icon="book" href="/quickstart">
+    Check the quickstart guide for common usage patterns
+  </Card>
+  
+  <Card title="Check Compatibility" icon="check" href="/resources/compatibility">
+    Verify your agent supports the feature you're trying to use
+  </Card>
+  
+  <Card title="Report an Issue" icon="github" href="https://github.com/vercel-labs/skills/issues">
+    File a bug report on GitHub
+  </Card>
+  
+  <Card title="Community" icon="users" href="https://skills.sh">
+    Browse skills and get community support
+  </Card>
+</CardGroup>

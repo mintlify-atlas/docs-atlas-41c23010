@@ -1,0 +1,219 @@
+---
+title: 'skills list'
+description: 'List all installed skills'
+---
+
+## Usage
+
+```bash
+skills list [options]
+skills ls [options]
+```
+
+## Description
+
+The `list` command displays all installed skills, showing their canonical paths and which agents they're linked to. Similar to `npm ls`, it provides an overview of your skill installations.
+
+Skills are grouped by plugin name (if available) for better organization.
+
+## Options
+
+<ParamField path="-g, --global" type="boolean">
+  List global skills from `~/<agent>/skills/` instead of project-scoped skills.
+  
+  **Default:** `false` (lists project skills)
+</ParamField>
+
+<ParamField path="-a, --agent" type="string[]">
+  Filter skills by specific agents. Only shows skills installed for the specified agents.
+  
+  **Examples:**
+  - `-a claude-code`
+  - `-a claude-code -a cursor`
+  
+  Valid agent names: `claude-code`, `opencode`, `cursor`, `codex`, `cline`, etc.
+</ParamField>
+
+## Examples
+
+<CodeGroup>
+
+```bash Project Skills
+# List all project-scoped skills (default)
+skills list
+
+# Using alias
+skills ls
+```
+
+```bash Global Skills
+# List all global skills
+skills list -g
+
+# Using alias
+skills ls -g
+```
+
+```bash Filter by Agent
+# List skills for a specific agent
+skills ls -a claude-code
+
+# List skills for multiple agents
+skills ls -a claude-code -a cursor
+
+# List global skills for a specific agent
+skills ls -g -a opencode
+```
+
+</CodeGroup>
+
+## Output Example
+
+<CodeGroup>
+
+```bash Grouped Output
+$ skills list
+
+Project Skills
+
+Design
+  frontend-design .agents/skills/frontend-design
+    Agents: OpenCode, Claude Code, Cursor
+  web-design-guidelines .agents/skills/web-design-guidelines
+    Agents: OpenCode, Claude Code, Cursor
+
+Development
+  skill-creator .agents/skills/skill-creator
+    Agents: OpenCode, Claude Code
+  pr-review .agents/skills/pr-review
+    Agents: OpenCode, Claude Code, Cursor, Codex
+
+General
+  commit-message .agents/skills/commit-message
+    Agents: OpenCode, Claude Code, Cursor
+```
+
+```bash Global Skills
+$ skills ls -g
+
+Global Skills
+
+General
+  my-custom-skill ~/.agents/skills/my-custom-skill
+    Agents: OpenCode, Claude Code, Cursor, Codex
+  shared-skill ~/.agents/skills/shared-skill
+    Agents: OpenCode, Claude Code
+```
+
+```bash No Skills Found
+$ skills list
+
+No project skills found.
+Try listing global skills with -g
+```
+
+```bash Filtered by Agent
+$ skills ls -a claude-code
+
+Project Skills
+
+Design
+  frontend-design .agents/skills/frontend-design
+    Agents: Claude Code
+  web-design-guidelines .agents/skills/web-design-guidelines
+    Agents: Claude Code
+```
+
+</CodeGroup>
+
+## Output Format
+
+For each skill, the output shows:
+
+<Steps>
+
+<Step title="Skill Name">
+  The name of the skill as defined in its SKILL.md frontmatter.
+  
+  ```
+  frontend-design
+  ```
+</Step>
+
+<Step title="Canonical Path">
+  The primary location where the skill is stored. Shortened for readability:
+  - `~` for home directory
+  - `.` for current directory
+  
+  ```
+  .agents/skills/frontend-design
+  ```
+</Step>
+
+<Step title="Linked Agents">
+  List of agents that have access to this skill. Shows:
+  - Agent display names (e.g., "Claude Code", "OpenCode")
+  - "not linked" if the skill exists but isn't linked to any agents
+  - Truncated with "+N more" if more than 5 agents
+  
+  ```
+  Agents: OpenCode, Claude Code, Cursor
+  ```
+</Step>
+
+</Steps>
+
+## Skill Grouping
+
+Skills are automatically grouped by their plugin name (from the lock file):
+
+- **Plugin Groups**: Skills with a `pluginName` are grouped together (e.g., "Design", "Development")
+- **General**: Skills without a plugin name appear in the "General" group
+- **Alphabetical**: Groups are sorted alphabetically
+
+This grouping makes it easier to find related skills when working with skill repositories that use plugin manifests.
+
+## Understanding Scope
+
+### Project Skills (Default)
+
+Skills installed in the current project directory:
+- Located in `./<agent>/skills/` or `.agents/skills/`
+- Committed with your project (if in version control)
+- Shared with team members
+- Only available in this project
+
+```bash
+skills list
+```
+
+### Global Skills
+
+Skills installed in your home directory:
+- Located in `~/<agent>/skills/` or `~/.agents/skills/`
+- Available across all projects
+- User-specific (not committed to version control)
+- Persist after project deletion
+
+```bash
+skills list -g
+```
+
+## Alias
+
+The following alias is available:
+- `skills ls` → `skills list`
+
+## Exit Codes
+
+| Code | Description |
+|------|-------------|
+| `0` | Success |
+| `1` | Invalid agent names provided |
+
+## Related Commands
+
+- [`skills add`](/commands/add) - Install new skills
+- [`skills remove`](/commands/remove) - Remove installed skills
+- [`skills find`](/commands/find) - Search for skills to install
+- [`skills check`](/commands/check) - Check for skill updates

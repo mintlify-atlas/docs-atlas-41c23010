@@ -1,0 +1,243 @@
+---
+title: Installation
+description: Get started with the Skills CLI
+---
+
+The Skills CLI requires **Node.js 18 or higher** and can be run directly with `npx` without installation.
+
+## Requirements
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    Version 18 or higher required
+  </Card>
+  <Card title="Package Manager" icon="box">
+    npm, pnpm, yarn, or bun
+  </Card>
+</CardGroup>
+
+## Using npx (Recommended)
+
+The easiest way to use the Skills CLI is with `npx`, which runs the latest version without requiring global installation:
+
+```bash Terminal
+npx skills add vercel-labs/agent-skills
+```
+
+<Tip>
+  Using `npx` ensures you're always running the latest version of the Skills CLI without manual updates.
+</Tip>
+
+## Global Installation
+
+If you prefer to install the CLI globally:
+
+<CodeGroup>
+
+```bash npm
+npm install -g skills
+```
+
+```bash pnpm
+pnpm add -g skills
+```
+
+```bash yarn
+yarn global add skills
+```
+
+```bash bun
+bun add -g skills
+```
+
+</CodeGroup>
+
+After global installation, you can use the `skills` command directly:
+
+```bash Terminal
+skills add vercel-labs/agent-skills
+```
+
+## Verify Installation
+
+Check that the CLI is working correctly:
+
+```bash Terminal
+# Show version
+npx skills --version
+
+# Show help
+npx skills --help
+
+# Show banner with available commands
+npx skills
+```
+
+## Package Manager Configuration
+
+### pnpm
+
+If you're using pnpm, the project uses pnpm as its package manager:
+
+```json package.json
+{
+  "packageManager": "pnpm@10.17.1"
+}
+```
+
+### npm Registry
+
+The package is published to the npm registry as `skills`:
+
+```bash Terminal
+# View package info
+npm info skills
+
+# View latest version
+npm info skills version
+```
+
+## Environment Variables
+
+Optional environment variables for configuration:
+
+| Variable                  | Description                                                                |
+| ------------------------- | -------------------------------------------------------------------------- |
+| `INSTALL_INTERNAL_SKILLS` | Set to `1` or `true` to show and install skills marked as `internal: true` |
+| `DISABLE_TELEMETRY`       | Set to disable anonymous usage telemetry                                   |
+| `DO_NOT_TRACK`            | Alternative way to disable telemetry                                       |
+| `GITHUB_TOKEN`            | GitHub personal access token for higher API rate limits                    |
+
+### Using a GitHub Token
+
+For higher rate limits when checking for updates or installing skills from private repositories:
+
+```bash Terminal
+export GITHUB_TOKEN=ghp_your_token_here
+npx skills add vercel-labs/agent-skills
+```
+
+<Info>
+  The CLI automatically respects `GITHUB_TOKEN` environment variables for authentication with GitHub's API.
+</Info>
+
+### Viewing Internal Skills
+
+Some skill repositories contain internal skills that are hidden by default. To view and install them:
+
+```bash Terminal
+INSTALL_INTERNAL_SKILLS=1 npx skills add vercel-labs/agent-skills --list
+```
+
+### Disabling Telemetry
+
+The CLI collects anonymous usage data by default. To disable:
+
+<CodeGroup>
+
+```bash DISABLE_TELEMETRY
+export DISABLE_TELEMETRY=1
+npx skills add vercel-labs/agent-skills
+```
+
+```bash DO_NOT_TRACK
+export DO_NOT_TRACK=1
+npx skills add vercel-labs/agent-skills
+```
+
+</CodeGroup>
+
+<Note>
+  Telemetry is automatically disabled in CI environments. No personal information is collected.
+</Note>
+
+## Updating the CLI
+
+If you installed globally, update with your package manager:
+
+<CodeGroup>
+
+```bash npm
+npm update -g skills
+```
+
+```bash pnpm
+pnpm update -g skills
+```
+
+```bash yarn
+yarn global upgrade skills
+```
+
+```bash bun
+bun update -g skills
+```
+
+</CodeGroup>
+
+If using `npx`, you're automatically using the latest version.
+
+## Troubleshooting
+
+### "Command not found: skills"
+
+If you get this error after global installation:
+
+1. Ensure your npm global bin directory is in your PATH:
+   ```bash Terminal
+   npm config get prefix
+   ```
+
+2. Add the bin directory to your PATH in `~/.bashrc` or `~/.zshrc`:
+   ```bash
+   export PATH="$PATH:$(npm config get prefix)/bin"
+   ```
+
+3. Reload your shell configuration:
+   ```bash Terminal
+   source ~/.bashrc  # or ~/.zshrc
+   ```
+
+### Permission Errors
+
+If you encounter permission errors during global installation:
+
+<CodeGroup>
+
+```bash Use npx (Recommended)
+# Avoid permission issues by using npx
+npx skills add vercel-labs/agent-skills
+```
+
+```bash Fix npm Permissions
+# Configure npm to use a different directory
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+export PATH=~/.npm-global/bin:$PATH
+```
+
+</CodeGroup>
+
+### Node.js Version Too Old
+
+The CLI requires Node.js 18 or higher:
+
+```bash Terminal
+# Check your Node.js version
+node --version
+
+# If too old, upgrade using nvm
+nvm install 18
+nvm use 18
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Learn how to install and manage skills
+  </Card>
+  <Card title="Discover Skills" icon="magnifying-glass" href="https://skills.sh">
+    Browse community skills
+  </Card>
+</CardGroup>

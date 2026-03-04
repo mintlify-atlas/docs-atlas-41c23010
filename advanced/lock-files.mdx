@@ -1,0 +1,359 @@
+---
+title: Lock Files
+description: Understanding global and local lock file formats and structure
+icon: lock
+---
+
+The Skills CLI uses two types of lock files to track installed skills: a **global lock file** for user-wide installations and a **local lock file** for project-scoped installations.
+
+## Global Lock File
+
+The global lock file tracks all skills installed to your user directory (`~/.agents/`). It is located at:
+
+```
+~/.agents/.skill-lock.json
+```
+
+### File Structure
+
+<CodeGroup>
+```json Global Lock File Example
+{
+  "version": 3,
+  "skills": {
+    "frontend-design": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/agent-skills",
+      "skillPath": "skills/frontend-design",
+      "skillFolderHash": "a3f2c1d9e8b7...",
+      "installedAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-20T14:45:00.000Z",
+      "pluginName": "web-design-tools"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": ["claude-code", "cursor"]
+}
+```
+</CodeGroup>
+
+### Schema Fields
+
+<ResponseField name="version" type="number" required>
+  Schema version for future migrations. Current version is `3`.
+</ResponseField>
+
+<ResponseField name="skills" type="object" required>
+  Map of skill name to skill entry. Each entry contains:
+
+  <Expandable title="SkillLockEntry">
+    <ResponseField name="source" type="string" required>
+      Normalized source identifier (e.g., `"owner/repo"`, `"mintlify/bun.com"`)
+    </ResponseField>
+
+    <ResponseField name="sourceType" type="string" required>
+      Provider/source type:
+      - `"github"` - GitHub repository
+      - `"mintlify"` - Mintlify documentation
+      - `"huggingface"` - HuggingFace repository
+      - `"local"` - Local filesystem path
+    </ResponseField>
+
+    <ResponseField name="sourceUrl" type="string" required>
+      Original URL used to install the skill (for re-fetching updates)
+    </ResponseField>
+
+    <ResponseField name="skillPath" type="string">
+      Subpath within the source repo (e.g., `"skills/react-best-practices"`)
+    </ResponseField>
+
+    <ResponseField name="skillFolderHash" type="string" required>
+      GitHub tree SHA for the entire skill folder. This hash changes when ANY file in the skill folder changes. Fetched via GitHub Trees API.
+    </ResponseField>
+
+    <ResponseField name="installedAt" type="string" required>
+      ISO 8601 timestamp when the skill was first installed
+    </ResponseField>
+
+    <ResponseField name="updatedAt" type="string" required>
+      ISO 8601 timestamp when the skill was last updated
+    </ResponseField>
+
+    <ResponseField name="pluginName" type="string">
+      Name of the plugin this skill belongs to (if any)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="dismissed" type="object">
+  Tracks dismissed prompts so they're not shown again.
+
+  <Expandable title="DismissedPrompts">
+    <ResponseField name="findSkillsPrompt" type="boolean">
+      Whether the find-skills skill installation prompt was dismissed
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="lastSelectedAgents" type="string[]">
+  Array of agent IDs last selected for installation
+</ResponseField>
+
+### Version History
+
+<AccordionGroup>
+  <Accordion title="Version 3 (Current)">
+    Added `skillFolderHash` field for folder-based update detection.
+    
+    **Breaking change:** Lock files from v2 and earlier are automatically wiped when read. Users must reinstall skills to populate the new format.
+  </Accordion>
+
+  <Accordion title="Version 2 (Deprecated)">
+    Used content hashing for update detection.
+  </Accordion>
+
+  <Accordion title="Version 1 (Deprecated)">
+    Initial version.
+  </Accordion>
+</AccordionGroup>
+
+### Skill Folder Hash Calculation
+
+The `skillFolderHash` is a GitHub tree SHA computed by the GitHub API. It represents the state of the entire skill folder.
+
+<Steps>
+  <Step title="Request tree data">
+    The CLI calls GitHub's Trees API for the repository:
+    ```
+    GET https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1
+    ```
+  </Step>
+
+  <Step title="Find skill folder">
+    The response contains all files/folders. The CLI finds the tree entry matching the skill folder path.
+  </Step>
+
+  <Step title="Extract SHA">
+    The tree entry's `sha` field is the skill folder hash. This SHA changes whenever any file in the folder changes.
+  </Step>
+</Steps>
+
+<Info>
+  For root-level skills (no subpath), the root tree SHA is used.
+</Info>
+
+### GitHub Token Resolution
+
+To avoid rate limits, the CLI attempts to use a GitHub token in this order:
+
+1. `GITHUB_TOKEN` environment variable
+2. `GH_TOKEN` environment variable  
+3. `gh` CLI auth token (via `gh auth token`)
+
+If no token is found, unauthenticated requests are made (lower rate limits apply).
+
+---
+
+## Local Lock File
+
+The local lock file tracks skills installed to a project directory. It is located at:
+
+```
+./skills-lock.json
+```
+
+This file is **meant to be checked into version control** and shared with your team.
+
+### File Structure
+
+<CodeGroup>
+```json Local Lock File Example
+{
+  "version": 1,
+  "skills": {
+    "frontend-design": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "e8a9f1c2d3b4..."
+    },
+    "skill-creator": {
+      "source": "../my-local-skills",
+      "sourceType": "local",
+      "computedHash": "f9b0e1d2c3a4..."
+    }
+  }
+}
+```
+</CodeGroup>
+
+### Design Philosophy
+
+The local lock file is **intentionally minimal** to:
+
+- **Minimize merge conflicts** - Skills are sorted alphabetically, and no timestamps are stored
+- **Deterministic output** - Same skills = same JSON every time
+- **Git-friendly** - Two branches adding different skills produce non-overlapping keys that auto-merge cleanly
+
+### Schema Fields
+
+<ResponseField name="version" type="number" required>
+  Schema version for future migrations. Current version is `1`.
+</ResponseField>
+
+<ResponseField name="skills" type="object" required>
+  Map of skill name to skill entry. Sorted alphabetically by key when written.
+
+  <Expandable title="LocalSkillLockEntry">
+    <ResponseField name="source" type="string" required>
+      Where the skill came from:
+      - npm package name
+      - GitHub `owner/repo`
+      - Local path
+    </ResponseField>
+
+    <ResponseField name="sourceType" type="string" required>
+      Provider/source type:
+      - `"github"` - GitHub repository
+      - `"node_modules"` - npm package
+      - `"local"` - Local filesystem path
+    </ResponseField>
+
+    <ResponseField name="computedHash" type="string" required>
+      SHA-256 hash computed from all files in the skill folder on disk.
+      
+      Unlike the global lock which uses GitHub tree SHA, the local lock computes the hash from actual file contents.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Computed Hash Algorithm
+
+The local lock file uses content-based hashing:
+
+<Steps>
+  <Step title="Collect all files">
+    Recursively read all files in the skill directory (excluding `.git/` and `node_modules/`)
+  </Step>
+
+  <Step title="Sort by path">
+    Sort files alphabetically by relative path for deterministic hashing
+  </Step>
+
+  <Step title="Hash contents">
+    Create a SHA-256 hash from:
+    - Each file's relative path (to detect renames)
+    - Each file's content (binary or text)
+  </Step>
+</Steps>
+
+<CodeGroup>
+```typescript Example Implementation
+import { createHash } from 'crypto';
+import { readdir, readFile } from 'fs/promises';
+import { join, relative } from 'path';
+
+async function computeSkillFolderHash(skillDir: string): Promise<string> {
+  const files: Array<{ relativePath: string; content: Buffer }> = [];
+  
+  // Collect all files recursively
+  await collectFiles(skillDir, skillDir, files);
+  
+  // Sort by relative path for determinism
+  files.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
+  
+  // Hash path + content for each file
+  const hash = createHash('sha256');
+  for (const file of files) {
+    hash.update(file.relativePath);
+    hash.update(file.content);
+  }
+  
+  return hash.digest('hex');
+}
+```
+</CodeGroup>
+
+---
+
+## Working with Lock Files
+
+### Reading Lock Files
+
+<CodeGroup>
+```typescript Global Lock
+import { readSkillLock } from './skill-lock';
+
+const lock = await readSkillLock();
+console.log(lock.skills); // All installed global skills
+```
+
+```typescript Local Lock
+import { readLocalLock } from './local-lock';
+
+const lock = await readLocalLock();
+console.log(lock.skills); // All project skills
+```
+</CodeGroup>
+
+### Adding Skills
+
+<CodeGroup>
+```typescript Global Lock
+import { addSkillToLock } from './skill-lock';
+
+await addSkillToLock('my-skill', {
+  source: 'owner/repo',
+  sourceType: 'github',
+  sourceUrl: 'https://github.com/owner/repo',
+  skillPath: 'skills/my-skill',
+  skillFolderHash: 'abc123...'
+});
+```
+
+```typescript Local Lock
+import { addSkillToLocalLock, computeSkillFolderHash } from './local-lock';
+
+const hash = await computeSkillFolderHash('/path/to/skill');
+
+await addSkillToLocalLock('my-skill', {
+  source: 'owner/repo',
+  sourceType: 'github',
+  computedHash: hash
+});
+```
+</CodeGroup>
+
+### Removing Skills
+
+<CodeGroup>
+```typescript Global Lock
+import { removeSkillFromLock } from './skill-lock';
+
+const removed = await removeSkillFromLock('my-skill');
+console.log(removed); // true if skill existed
+```
+
+```typescript Local Lock
+import { removeSkillFromLocalLock } from './local-lock';
+
+const removed = await removeSkillFromLocalLock('my-skill');
+console.log(removed); // true if skill existed
+```
+</CodeGroup>
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Update System" icon="arrow-up" href="/advanced/update-system">
+    Learn how the update checking system uses lock files
+  </Card>
+  
+  <Card title="Plugin Manifests" icon="puzzle-piece" href="/advanced/plugin-manifests">
+    Discover how plugin manifests integrate with lock files
+  </Card>
+</CardGroup>

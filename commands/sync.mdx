@@ -1,0 +1,397 @@
+---
+title: 'skills experimental_sync'
+description: 'Sync skills from node_modules into agent directories'
+---
+
+<Warning>
+  This command is **experimental** and may change in future versions. The API and behavior are not yet stable.
+</Warning>
+
+## Usage
+
+```bash
+skills experimental_sync [options]
+```
+
+## Description
+
+The `experimental_sync` command crawls your `node_modules` directory to discover skills bundled with npm packages, then installs them to agent directories. This is useful for:
+
+- Teams sharing skills via npm packages
+- Monorepos with skill packages
+- Automatic skill setup from `package.json` dependencies
+
+Skills are installed as project-scoped symlinks and tracked in a local lock file (`skills-lock.json`) to avoid redundant reinstalls.
+
+## How It Works
+
+<Steps>
+
+<Step title="Scan node_modules">
+  Recursively searches `node_modules` for SKILL.md files in:
+  - Package root: `node_modules/pkg/SKILL.md`
+  - `skills/` directory: `node_modules/pkg/skills/*/SKILL.md`
+  - `.agents/skills/`: `node_modules/pkg/.agents/skills/*/SKILL.md`
+  - Scoped packages: `node_modules/@org/pkg/...`
+  
+  Discovers all skills across all installed packages.
+</Step>
+
+<Step title="Check Local Lock">
+  Reads `skills-lock.json` to see which skills are already installed and up to date.
+  
+  Computes a hash of each discovered skill folder and compares with the lock file:
+  - **Match**: Skill is up to date (skipped)
+  - **Different**: Skill needs installation/update
+</Step>
+
+<Step title="Select Agents">
+  Prompts to select which agents to install to (unless `-y` flag is used).
+  
+  Universal agents (`.agents/skills/`) are always included.
+</Step>
+
+<Step title="Install Skills">
+  Creates symlinks from agent directories to the canonical copy in `.agents/skills/`.
+  
+  Updates `skills-lock.json` with new hashes.
+</Step>
+
+</Steps>
+
+## Options
+
+<ParamField path="-a, --agent" type="string[]">
+  Specify which agents to install to. Accepts multiple agent names or `'*'` for all agents.
+  
+  **Examples:**
+  - `-a claude-code -a cursor`
+  - `--agent '*'` (all agents)
+  
+  **Default:** Detects installed agents or prompts interactively
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompts. Automatically proceeds with sync.
+  
+  **Default:** `false`
+</ParamField>
+
+<ParamField path="-f, --force" type="boolean">
+  Force reinstall of all skills, even if they're already up to date.
+  
+  **Default:** `false`
+</ParamField>
+
+## Examples
+
+<CodeGroup>
+
+```bash Interactive Sync
+# Scan node_modules and prompt for agents
+skills experimental_sync
+
+# Shows discovered skills, then prompts:
+# - Which agents to install to?
+# - Confirm sync?
+```
+
+```bash Non-Interactive Sync
+# Sync without prompts (CI/CD friendly)
+skills experimental_sync -y
+
+# Installs to detected agents automatically
+```
+
+```bash Specific Agents
+# Sync to specific agents
+skills experimental_sync -a claude-code -a cursor
+
+# Sync to all agents
+skills experimental_sync --agent '*'
+```
+
+```bash Force Reinstall
+# Reinstall all skills even if up to date
+skills experimental_sync --force
+
+# Force with specific agents
+skills experimental_sync -f -a claude-code
+```
+
+</CodeGroup>
+
+## Package Structure
+
+To include skills in your npm package, use one of these structures:
+
+<Tabs>
+  <Tab title="Root SKILL.md">
+    Single skill at package root:
+    
+    ```
+    my-package/
+    ├── SKILL.md
+    ├── package.json
+    └── ...
+    ```
+    
+    The skill name comes from the SKILL.md frontmatter.
+  </Tab>
+  
+  <Tab title="skills/ Directory">
+    Multiple skills in `skills/` directory:
+    
+    ```
+    my-package/
+    ├── skills/
+    │   ├── skill1/
+    │   │   └── SKILL.md
+    │   └── skill2/
+    │       └── SKILL.md
+    ├── package.json
+    └── ...
+    ```
+  </Tab>
+  
+  <Tab title=".agents/skills/">
+    Skills in `.agents/skills/` (preferred):
+    
+    ```
+    my-package/
+    ├── .agents/
+    │   └── skills/
+    │       ├── skill1/
+    │       │   └── SKILL.md
+    │       └── skill2/
+    │           └── SKILL.md
+    ├── package.json
+    └── ...
+    ```
+  </Tab>
+</Tabs>
+
+## Output Example
+
+```bash
+$ skills experimental_sync
+
+███████╗██╗  ██╗██╗██╗     ██╗     ███████╗
+██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝
+███████╗█████╔╝ ██║██║     ██║     ███████╗
+╚════██║██╔═██╗ ██║██║     ██║     ╚════██║
+███████║██║  ██╗██║███████╗███████╗███████║
+╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝
+
+◇  Found 3 skills in node_modules
+
+◆  web-scraper from @company/agent-skills
+   Extract structured data from websites
+◆  pr-review from vercel-labs/agent-skills
+   Automated PR review with best practices
+◆  commit-message from vercel-labs/agent-skills
+   Generate conventional commit messages
+
+◆  2 skills already up to date
+◆  1 skill to install/update
+
+┌  Sync Summary
+│
+│  pr-review ← vercel-labs/agent-skills
+│    .agents/skills/pr-review
+│
+└
+
+◆  Proceed with sync? … yes
+◇  Sync complete
+
+┌  Synced 1 skill
+│
+│  ✓ pr-review ← vercel-labs/agent-skills
+│    .agents/skills/pr-review
+│
+└
+
+◆  Done!  Review skills before use; they run with full agent permissions.
+```
+
+## Local Lock File
+
+The sync command uses `skills-lock.json` (project-scoped) to track installed skills:
+
+```json
+{
+  "version": 1,
+  "skills": {
+    "pr-review": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "node_modules",
+      "computedHash": "abc123...",
+      "syncedAt": "2024-01-15T10:30:00Z"
+    },
+    "web-scraper": {
+      "source": "@company/agent-skills",
+      "sourceType": "node_modules",
+      "computedHash": "def456...",
+      "syncedAt": "2024-01-15T10:30:00Z"
+    }
+  }
+}
+```
+
+Key differences from global lock file:
+- **Location**: Project root (committed with your project)
+- **Scope**: Project-scoped skills only
+- **Hash**: Computed from local files (not GitHub tree SHA)
+- **Purpose**: Avoid redundant syncs when `node_modules` hasn't changed
+
+## Workflow Integration
+
+### In package.json
+
+Add sync to your setup scripts:
+
+```json
+{
+  "scripts": {
+    "postinstall": "npx skills experimental_sync -y",
+    "setup": "npm install && npx skills experimental_sync"
+  }
+}
+```
+
+This automatically syncs skills after:
+- `npm install`
+- `npm ci`
+- Fresh clones
+
+### In Monorepos
+
+For monorepos with multiple packages containing skills:
+
+```bash
+# Root package.json
+{
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "setup": "npm install && npx skills experimental_sync -y"
+  }
+}
+
+# packages/agent-skills/package.json
+{
+  "name": "@company/agent-skills",
+  "files": [".agents/skills/**/*"]
+}
+```
+
+Run sync from the root:
+```bash
+npm run setup
+```
+
+## Sync vs Add
+
+Comparison with the `add` command:
+
+| Feature | `experimental_sync` | `add` |
+|---------|---------------------|-------|
+| Source | `node_modules` | GitHub, Git, URLs, local paths |
+| Scope | Project only | Project or global |
+| Updates | Automatic (via lock file) | Manual |
+| Lock file | `skills-lock.json` (local) | `.skill-lock.json` (global) |
+| Use case | Team dependencies | Individual skills |
+
+**When to use sync:**
+- Skills are in `package.json` dependencies
+- Automated setup for new team members
+- CI/CD environments
+- Monorepo skill packages
+
+**When to use add:**
+- Installing from GitHub repos
+- Global skills for personal use
+- One-off skill installations
+- Testing skills before packaging
+
+## Force Mode
+
+The `--force` flag reinstalls all skills, ignoring the lock file:
+
+```bash
+skills experimental_sync --force
+```
+
+**Use when:**
+- Lock file is corrupted
+- Skills were manually deleted
+- Testing skill changes during development
+- Resetting to clean state
+
+**Note:** This is slower as it reinstalls everything.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="No skills found" icon="magnifying-glass">
+    **Message:** `No SKILL.md files found in node_modules`
+    
+    **Causes:**
+    - No packages with skills installed
+    - Skills not in standard locations
+    - `node_modules` missing (run `npm install`)
+    
+    **Check:**
+    ```bash
+    # Verify packages are installed
+    ls node_modules/
+    
+    # Look for SKILL.md files
+    find node_modules -name "SKILL.md"
+    ```
+  </Accordion>
+  
+  <Accordion title="Skills already up to date" icon="check">
+    **Message:** `All skills are up to date`
+    
+    **Cause:** Lock file matches current `node_modules` state
+    
+    **Force reinstall if needed:**
+    ```bash
+    skills experimental_sync --force
+    ```
+  </Accordion>
+  
+  <Accordion title="Symlink failures" icon="link-slash">
+    **Symptom:** Skills installed as copies instead of symlinks
+    
+    **Causes:**
+    - Windows without Developer Mode
+    - Filesystem doesn't support symlinks
+    - Permission issues
+    
+    **Solutions:**
+    - Enable Developer Mode (Windows)
+    - Check filesystem mount options
+    - Run with appropriate permissions
+  </Accordion>
+  
+  <Accordion title="Lock file conflicts" icon="file">
+    **Symptom:** Git conflicts in `skills-lock.json`
+    
+    **Cause:** Multiple team members syncing different skills
+    
+    **Solution:**
+    ```bash
+    # Resolve conflict, then re-sync
+    git checkout --theirs skills-lock.json
+    skills experimental_sync --force
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related Commands
+
+- [`skills add`](/commands/add) - Install skills from repositories
+- [`skills list`](/commands/list) - List installed skills
+- [`skills remove`](/commands/remove) - Remove skills

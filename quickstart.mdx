@@ -1,80 +1,484 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Install your first skill in under 2 minutes
 ---
 
-## Get started in three steps
+This guide will walk you through installing and using your first agent skill.
 
-Get your documentation site running locally and make your first customization.
+## Install a Skill
 
-### Step 1: Set up your local environment
+The quickest way to get started is to install skills from a GitHub repository:
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+```bash Terminal
+npx skills add vercel-labs/agent-skills
+```
 
-### Step 2: Deploy your changes
+<Steps>
+  <Step title="Source Detection">
+    The CLI parses the source and clones the repository
+  </Step>
+  <Step title="Skill Discovery">
+    Automatically discovers all skills in the repository
+  </Step>
+  <Step title="Agent Detection">
+    Detects which coding agents you have installed
+  </Step>
+  <Step title="Interactive Selection">
+    Select which skills and agents to install to
+  </Step>
+  <Step title="Installation">
+    Installs skills with your chosen method (symlink or copy)
+  </Step>
+</Steps>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+## List Available Skills
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+Before installing, you can preview available skills in a repository:
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+```bash Terminal
+npx skills add vercel-labs/agent-skills --list
+```
 
-### Step 3: Go live
+This shows all skills without installing anything.
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+## Source Formats
 
-## Next steps
+The CLI supports multiple source formats:
 
-Now that you have your docs running, explore these key features:
+<CodeGroup>
 
-<CardGroup cols={2}>
+```bash GitHub Shorthand
+# owner/repo format
+npx skills add vercel-labs/agent-skills
+```
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+```bash Full GitHub URL
+# Complete repository URL
+npx skills add https://github.com/vercel-labs/agent-skills
+```
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+```bash Specific Skill Path
+# Direct path to a skill in a repo
+npx skills add https://github.com/vercel-labs/agent-skills/tree/main/skills/web-design-guidelines
+```
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+```bash GitLab URL
+# GitLab repositories
+npx skills add https://gitlab.com/org/repo
+```
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
+```bash Git URL
+# Any git URL
+npx skills add git@github.com:vercel-labs/agent-skills.git
+```
 
-</CardGroup>
+```bash Local Path
+# Local directory
+npx skills add ./my-local-skills
+```
+
+</CodeGroup>
+
+## Installation Options
+
+### Install to Specific Agents
+
+Target specific coding agents using the `--agent` or `-a` flag:
+
+```bash Terminal
+# Install to Claude Code and Cursor
+npx skills add vercel-labs/agent-skills -a claude-code -a cursor
+
+# Install to all detected agents
+npx skills add vercel-labs/agent-skills -a '*'
+```
+
+<Info>
+  Available agent names: `claude-code`, `codex`, `cursor`, `cline`, `opencode`, `windsurf`, and [37 more](https://github.com/vercel-labs/skills#supported-agents).
+</Info>
+
+### Install Specific Skills
+
+Install only certain skills from a repository:
+
+```bash Terminal
+# Install specific skills by name
+npx skills add vercel-labs/agent-skills --skill frontend-design --skill skill-creator
+
+# Skill names with spaces must be quoted
+npx skills add owner/repo --skill "Convex Best Practices"
+
+# Install all skills from repo
+npx skills add vercel-labs/agent-skills --skill '*'
+```
+
+### Global vs Project Installation
+
+By default, skills are installed at the project level. Use `-g` for global installation:
+
+<CodeGroup>
+
+```bash Project (Default)
+# Installs to ./<agent>/skills/
+# Shared with team when committed
+npx skills add vercel-labs/agent-skills
+```
+
+```bash Global
+# Installs to ~/<agent>/skills/
+# Available across all projects
+npx skills add vercel-labs/agent-skills -g
+```
+
+</CodeGroup>
+
+| Scope       | Flag      | Location            | Use Case                                      |
+| ----------- | --------- | ------------------- | --------------------------------------------- |
+| **Project** | (default) | `./<agent>/skills/` | Committed with your project, shared with team |
+| **Global**  | `-g`      | `~/<agent>/skills/` | Available across all projects                 |
+
+### Installation Methods
+
+When installing interactively, you can choose between:
+
+| Method                    | Description                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------- |
+| **Symlink** (Recommended) | Creates symlinks from each agent to a canonical copy. Single source of truth, easy updates. |
+| **Copy**                  | Creates independent copies for each agent. Use when symlinks aren't supported.              |
+
+To force copy mode non-interactively:
+
+```bash Terminal
+npx skills add vercel-labs/agent-skills --copy
+```
+
+### Non-Interactive Installation
+
+For CI/CD pipelines or automation, skip all prompts:
+
+```bash Terminal
+# Skip all confirmation prompts
+npx skills add vercel-labs/agent-skills --skill frontend-design -g -a claude-code -y
+
+# Install all skills to all agents without prompts
+npx skills add vercel-labs/agent-skills --all
+```
+
+<Tip>
+  The `--all` flag is shorthand for `--skill '*' --agent '*' -y`
+</Tip>
+
+## Managing Skills
+
+### List Installed Skills
+
+View all installed skills:
+
+```bash Terminal
+# List project skills
+npx skills list
+
+# List global skills
+npx skills ls -g
+
+# Filter by specific agents
+npx skills ls -a claude-code -a cursor
+```
+
+### Search for Skills
+
+Find skills interactively or by keyword:
+
+```bash Terminal
+# Interactive search (fzf-style)
+npx skills find
+
+# Search by keyword
+npx skills find typescript
+```
+
+### Check for Updates
+
+Check if any installed skills have updates:
+
+```bash Terminal
+npx skills check
+```
+
+The CLI compares the GitHub tree SHA of your installed skills against the latest version in the repository.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  Update checking only works for skills installed from GitHub repositories. Local paths and git URLs are skipped.
 </Note>
+
+### Update Skills
+
+Update all skills to their latest versions:
+
+```bash Terminal
+npx skills update
+```
+
+This automatically reinstalls each skill that has an available update.
+
+### Remove Skills
+
+Remove installed skills:
+
+```bash Terminal
+# Interactive selection
+npx skills remove
+
+# Remove specific skill by name
+npx skills remove web-design-guidelines
+
+# Remove multiple skills
+npx skills remove skill1 skill2 -y
+
+# Remove from global scope
+npx skills remove --global my-skill
+
+# Remove from specific agents
+npx skills rm --agent claude-code my-skill
+
+# Remove all skills
+npx skills remove --all
+```
+
+## Creating Your Own Skills
+
+### Initialize a Skill
+
+Create a new skill template:
+
+```bash Terminal
+# Create SKILL.md in current directory
+npx skills init
+
+# Create a new skill in a subdirectory
+npx skills init my-skill
+```
+
+This creates a `SKILL.md` file with the required frontmatter:
+
+```markdown SKILL.md
+---
+name: my-skill
+description: A brief description of what this skill does
+---
+
+# my-skill
+
+Instructions for the agent to follow when this skill is activated.
+
+## When to use
+
+Describe when this skill should be used.
+
+## Instructions
+
+1. First step
+2. Second step
+3. Additional steps as needed
+```
+
+### Skill Structure
+
+Skills are directories containing a `SKILL.md` file with YAML frontmatter:
+
+<CodeGroup>
+
+```markdown Required Fields
+---
+name: my-skill
+description: What this skill does and when to use it
+---
+
+# My Skill
+
+Instructions for the agent...
+```
+
+```markdown Optional Fields
+---
+name: my-internal-skill
+description: An internal skill not shown by default
+metadata:
+  internal: true
+---
+
+# Internal Skill
+
+This skill is hidden from normal discovery.
+```
+
+</CodeGroup>
+
+### Required Fields
+
+- `name`: Unique identifier (lowercase, hyphens allowed)
+- `description`: Brief explanation of what the skill does
+
+### Publishing Your Skill
+
+Once you've created a skill:
+
+<Steps>
+  <Step title="Create Repository">
+    Push your skill to GitHub in a repository
+  </Step>
+  <Step title="Organize Skills">
+    Place skills in a `skills/` directory (recommended) or root
+  </Step>
+  <Step title="Share">
+    Others can install with `npx skills add owner/repo`
+  </Step>
+  <Step title="Submit to Registry">
+    Submit to [skills.sh](https://skills.sh) for discovery
+  </Step>
+</Steps>
+
+## Advanced Features
+
+### Restore from Lock File
+
+Restore skills from `skills-lock.json` (experimental):
+
+```bash Terminal
+npx skills experimental_install
+```
+
+### Sync from node_modules
+
+Sync skills found in `node_modules` (experimental):
+
+```bash Terminal
+# Interactive sync
+npx skills experimental_sync
+
+# Non-interactive sync
+npx skills experimental_sync -y
+
+# Sync to specific agents
+npx skills experimental_sync -a claude-code -a cursor
+```
+
+## Common Workflows
+
+### Team Collaboration
+
+Share skills with your team by installing at project level:
+
+```bash Terminal
+# Install to project
+npx skills add vercel-labs/agent-skills --skill pr-review
+
+# Commit the skills directory
+git add .claude/skills/
+git commit -m "Add PR review skill"
+```
+
+Team members will have the skills when they clone the repository.
+
+### Personal Productivity
+
+Install skills globally for personal use across all projects:
+
+```bash Terminal
+# Install globally
+npx skills add vercel-labs/agent-skills -g --skill release-notes
+
+# Available in all projects now
+```
+
+### CI/CD Integration
+
+Use non-interactive mode in CI pipelines:
+
+```bash Terminal
+# Install specific skills for CI
+DISABLE_TELEMETRY=1 npx skills add owner/repo \
+  --skill "code-review" \
+  -a claude-code \
+  -y
+```
+
+## Example Commands
+
+<CodeGroup>
+
+```bash Basic Install
+# Install from GitHub shorthand
+npx skills add vercel-labs/agent-skills
+```
+
+```bash Global Install
+# Install globally
+npx skills add vercel-labs/agent-skills -g
+```
+
+```bash Specific Agents
+# Install to specific agents
+npx skills add vercel-labs/agent-skills -a claude-code -a cursor
+```
+
+```bash Specific Skills
+# Install specific skills
+npx skills add vercel-labs/agent-skills --skill pr-review --skill commit
+```
+
+```bash Non-Interactive
+# CI/CD friendly installation
+npx skills add vercel-labs/agent-skills --skill frontend-design -g -a claude-code -y
+```
+
+```bash Install All
+# Install all skills to all agents
+npx skills add vercel-labs/agent-skills --all
+```
+
+</CodeGroup>
+
+## Troubleshooting
+
+### "No skills found"
+
+Ensure the repository contains valid `SKILL.md` files with both `name` and `description` in the frontmatter.
+
+### Skill not loading in agent
+
+- Verify the skill was installed to the correct path using `npx skills list`
+- Check the agent's documentation for skill loading requirements
+- Ensure the `SKILL.md` frontmatter is valid YAML
+- Restart your coding agent to reload skills
+
+### Permission errors
+
+Ensure you have write access to the target directory. Try using global installation (`-g`) or check directory permissions.
+
+### Rate limit errors
+
+If you hit GitHub API rate limits:
+
+```bash Terminal
+# Set a GitHub token for higher limits
+export GITHUB_TOKEN=ghp_your_token_here
+npx skills add vercel-labs/agent-skills
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Browse Skills" icon="magnifying-glass" href="https://skills.sh">
+    Discover community skills at skills.sh
+  </Card>
+  <Card title="Agent Skills Spec" icon="book" href="https://agentskills.io">
+    Learn about the Agent Skills specification
+  </Card>
+  <Card title="Create a Skill" icon="code">
+    Build your own skill with `npx skills init`
+  </Card>
+  <Card title="View Source" icon="github" href="https://github.com/vercel-labs/skills">
+    Explore the CLI source code
+  </Card>
+</CardGroup>

@@ -1,0 +1,475 @@
+---
+title: "CLI Options Reference"
+description: "Complete reference for all Skills CLI commands and options"
+---
+
+## Commands Overview
+
+The Skills CLI provides commands for managing agent skills across your projects.
+
+```bash
+skills <command> [options]
+```
+
+## Core Commands
+
+### `add`
+
+Install skills from git repositories, URLs, or local paths.
+
+```bash
+skills add <package> [options]
+```
+
+<ParamField path="package" type="string" required>
+  Source to install skills from. Supports:
+  - GitHub shorthand: `owner/repo`
+  - Full GitHub URL: `https://github.com/owner/repo`
+  - Direct skill path: `https://github.com/owner/repo/tree/main/skills/my-skill`
+  - GitLab URL: `https://gitlab.com/org/repo`
+  - Any git URL: `git@github.com:owner/repo.git`
+  - Local path: `./my-local-skills`
+</ParamField>
+
+#### Options
+
+<ParamField path="-g, --global" type="boolean">
+  Install to user directory (`~/<agent>/skills/`) instead of project directory (`./<agent>/skills/`)
+</ParamField>
+
+<ParamField path="-a, --agent" type="string[]">
+  Target specific agents for installation. Use `'*'` to target all installed agents.
+  
+  **Examples:**
+  - `-a claude-code`
+  - `-a claude-code cursor`  
+  - `--agent '*'`
+</ParamField>
+
+<ParamField path="-s, --skill" type="string[]">
+  Install specific skills by name. Use `'*'` to install all skills from the source.
+  
+  **Examples:**
+  - `-s frontend-design`
+  - `--skill pr-review commit-helper`
+  - `--skill '*'`
+</ParamField>
+
+<ParamField path="-l, --list" type="boolean">
+  List available skills in the repository without installing them.
+</ParamField>
+
+<ParamField path="--copy" type="boolean">
+  Copy files instead of creating symlinks. Use when symlinks aren't supported (e.g., Windows without Developer Mode).
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip all confirmation prompts. Useful for CI/CD and automated installations.
+</ParamField>
+
+<ParamField path="--all" type="boolean">
+  Shorthand for `--skill '*' --agent '*' -y`. Installs all skills to all agents without prompts.
+</ParamField>
+
+<ParamField path="--full-depth" type="boolean">
+  Search all subdirectories even when a root SKILL.md exists. Useful for repositories with skills at multiple levels.
+</ParamField>
+
+#### Examples
+
+<CodeGroup>
+```bash List available skills
+npx skills add vercel-labs/agent-skills --list
+```
+
+```bash Install specific skill
+npx skills add vercel-labs/agent-skills --skill frontend-design
+```
+
+```bash Install to specific agents
+npx skills add vercel-labs/agent-skills -a claude-code -a cursor
+```
+
+```bash Non-interactive installation
+npx skills add vercel-labs/agent-skills --skill pr-review -g -y
+```
+
+```bash Install all skills to all agents
+npx skills add vercel-labs/agent-skills --all
+```
+
+```bash Install from local path
+npx skills add ./my-custom-skills -g
+```
+</CodeGroup>
+
+---
+
+### `remove`
+
+Remove installed skills from agents.
+
+```bash
+skills remove [skills...] [options]
+```
+
+<ParamField path="skills" type="string[]">
+  Optional skill names to remove. If omitted, shows interactive selection menu.
+</ParamField>
+
+#### Options
+
+<ParamField path="-g, --global" type="boolean">
+  Remove from global scope (`~/<agent>/skills/`) instead of project scope.
+</ParamField>
+
+<ParamField path="-a, --agent" type="string[]">
+  Remove from specific agents. Use `'*'` to remove from all agents.
+</ParamField>
+
+<ParamField path="-s, --skill" type="string[]">
+  Specify skills to remove. Use `'*'` to remove all skills.
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompts.
+</ParamField>
+
+<ParamField path="--all" type="boolean">
+  Shorthand for `--skill '*' --agent '*' -y`. Removes all skills from all agents.
+</ParamField>
+
+#### Examples
+
+<CodeGroup>
+```bash Interactive removal
+npx skills remove
+```
+
+```bash Remove specific skill
+npx skills remove my-skill
+```
+
+```bash Remove from global scope
+npx skills remove --global frontend-design
+```
+
+```bash Remove from specific agent
+npx skills remove --agent cursor my-skill
+```
+
+```bash Remove all skills
+npx skills remove --all
+```
+</CodeGroup>
+
+---
+
+### `list`
+
+List all installed skills.
+
+```bash
+skills list [options]
+```
+
+**Aliases:** `ls`
+
+#### Options
+
+<ParamField path="-g, --global" type="boolean">
+  List only global skills. By default, lists both project and global skills.
+</ParamField>
+
+<ParamField path="-a, --agent" type="string[]">
+  Filter results by specific agents.
+</ParamField>
+
+#### Examples
+
+<CodeGroup>
+```bash List all skills
+npx skills list
+```
+
+```bash List global skills only
+npx skills ls -g
+```
+
+```bash Filter by agent
+npx skills ls -a claude-code -a cursor
+```
+</CodeGroup>
+
+---
+
+### `find`
+
+Search for skills interactively or by keyword.
+
+```bash
+skills find [query]
+```
+
+**Aliases:** `search`, `f`, `s`
+
+<ParamField path="query" type="string">
+  Optional search keyword. If omitted, opens interactive search (fzf-style).
+</ParamField>
+
+#### Examples
+
+<CodeGroup>
+```bash Interactive search
+npx skills find
+```
+
+```bash Search by keyword
+npx skills find typescript
+```
+
+```bash Search for React skills
+npx skills find react
+```
+</CodeGroup>
+
+---
+
+### `check`
+
+Check for available skill updates.
+
+```bash
+skills check
+```
+
+Compares installed skills against their latest versions on GitHub. Only checks skills with version tracking (installed after lock file v3).
+
+<Note>
+  Skills installed from local paths cannot be checked for updates automatically. You'll see a message indicating which skills were skipped.
+</Note>
+
+---
+
+### `update`
+
+Update all installed skills to their latest versions.
+
+```bash
+skills update
+```
+
+**Aliases:** `upgrade`
+
+Automatically checks for and installs updates for all trackable skills.
+
+<Warning>
+  This command reinstalls skills globally. Project-specific customizations may be lost.
+</Warning>
+
+---
+
+### `init`
+
+Create a new skill template.
+
+```bash
+skills init [name]
+```
+
+<ParamField path="name" type="string">
+  Optional skill name. If omitted, creates `SKILL.md` in current directory. If provided, creates `<name>/SKILL.md`.
+</ParamField>
+
+#### Examples
+
+<CodeGroup>
+```bash Create in current directory
+npx skills init
+```
+
+```bash Create in subdirectory
+npx skills init my-awesome-skill
+```
+</CodeGroup>
+
+---
+
+### `experimental_install`
+
+Restore skills from `skills-lock.json`.
+
+```bash
+skills experimental_install
+```
+
+**Aliases:** `i`, `install` (when no arguments provided)
+
+Restores project skills from the lock file, similar to `npm install`. Useful for:
+- Setting up a new development environment
+- Ensuring team members have consistent skills
+- CI/CD environments
+
+<Tip>
+  The `skills-lock.json` file should be committed to version control to track project skill dependencies.
+</Tip>
+
+---
+
+### `experimental_sync`
+
+Sync skills from `node_modules` into agent directories.
+
+```bash
+skills experimental_sync [options]
+```
+
+Crawls `node_modules` for skills and installs them to agent directories.
+
+#### Options
+
+<ParamField path="-a, --agent" type="string[]">
+  Specify agents to sync to. Use `'*'` for all agents.
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompts.
+</ParamField>
+
+#### Examples
+
+<CodeGroup>
+```bash Interactive sync
+npx skills experimental_sync
+```
+
+```bash Sync without prompts
+npx skills experimental_sync -y
+```
+
+```bash Sync to specific agents
+npx skills experimental_sync -a claude-code -y
+```
+</CodeGroup>
+
+---
+
+## Global Options
+
+These options work with any command:
+
+<ParamField path="--help, -h" type="boolean">
+  Show help message for the command.
+</ParamField>
+
+<ParamField path="--version, -v" type="boolean">
+  Show CLI version number.
+</ParamField>
+
+## Installation Scope
+
+| Scope | Flag | Location | Use Case |
+|-------|------|----------|----------|
+| **Project** | (default) | `./<agent>/skills/` | Committed with project, shared with team |
+| **Global** | `-g` | `~/<agent>/skills/` | Available across all projects |
+
+## Installation Methods
+
+When installing interactively, choose between:
+
+| Method | Description | When to Use |
+|--------|-------------|-------------|
+| **Symlink** (Recommended) | Creates symlinks from agent directories to canonical copy in `.agents/skills/` | Default choice, easy updates |
+| **Copy** | Creates independent copies for each agent | When symlinks not supported (e.g., Windows) |
+
+<Tip>
+  Use `--copy` flag to force copy mode: `npx skills add <repo> --copy`
+</Tip>
+
+## Environment Variables
+
+The CLI respects these environment variables:
+
+| Variable | Description |
+|----------|-------------|
+| `INSTALL_INTERNAL_SKILLS` | Set to `1` or `true` to show skills marked as `internal: true` |
+| `DISABLE_TELEMETRY` | Disable anonymous usage telemetry |
+| `DO_NOT_TRACK` | Alternative way to disable telemetry |
+| `GITHUB_TOKEN` | GitHub token for higher API rate limits |
+| `CLAUDE_CONFIG_DIR` | Custom Claude Code config directory (default: `~/.claude`) |
+| `CODEX_HOME` | Custom Codex home directory (default: `~/.codex`) |
+
+## Examples by Use Case
+
+<Accordion title="Setting up a new project" icon="rocket">
+  ```bash
+  # Install skills for your project
+  npx skills add vercel-labs/agent-skills --skill frontend-design
+  
+  # Team members restore from lock file
+  npx skills experimental_install
+  ```
+</Accordion>
+
+<Accordion title="Installing for multiple agents" icon="users">
+  ```bash
+  # Install to specific agents
+  npx skills add owner/repo -a claude-code -a cursor
+  
+  # Install to all detected agents
+  npx skills add owner/repo --agent '*'
+  ```
+</Accordion>
+
+<Accordion title="CI/CD automation" icon="gear">
+  ```bash
+  # Non-interactive installation
+  npx skills add owner/repo --skill my-skill -g -y
+  
+  # Restore from lock file
+  npx skills experimental_install
+  ```
+</Accordion>
+
+<Accordion title="Keeping skills updated" icon="rotate">
+  ```bash
+  # Check for updates
+  npx skills check
+  
+  # Update all skills
+  npx skills update
+  ```
+</Accordion>
+
+<Accordion title="Managing global skills" icon="globe">
+  ```bash
+  # Install globally
+  npx skills add owner/repo -g
+  
+  # List global skills
+  npx skills ls -g
+  
+  # Remove global skill
+  npx skills remove my-skill --global
+  ```
+</Accordion>
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Skill Format" icon="file-code" href="/api/skill-format">
+    Learn how to create SKILL.md files
+  </Card>
+  
+  <Card title="Agent Config" icon="gear" href="/api/agent-config">
+    Agent configuration reference
+  </Card>
+  
+  <Card title="Compatibility" icon="check" href="/resources/compatibility">
+    Agent feature compatibility
+  </Card>
+  
+  <Card title="Troubleshooting" icon="wrench" href="/resources/troubleshooting">
+    Common issues and solutions
+  </Card>
+</CardGroup>

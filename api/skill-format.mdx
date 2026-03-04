@@ -1,0 +1,396 @@
+---
+title: "Skill Format Specification"
+description: "Complete reference for SKILL.md file format and YAML frontmatter schema"
+---
+
+Skills are defined in `SKILL.md` files with YAML frontmatter. This format follows the [Agent Skills specification](https://agentskills.io) for cross-agent compatibility.
+
+## Basic Structure
+
+A skill consists of a markdown file with YAML frontmatter:
+
+```markdown
+---
+name: skill-name
+description: What this skill does and when to use it
+---
+
+# Skill Title
+
+Instructions for the agent to follow when this skill is activated.
+
+## When to Use
+
+Describe the scenarios where this skill should be used.
+
+## Steps
+
+1. First step
+2. Second step
+3. Additional steps as needed
+```
+
+## YAML Frontmatter Schema
+
+The frontmatter contains metadata that helps agents discover and understand your skill.
+
+### Required Fields
+
+<ParamField path="name" type="string" required>
+  Unique identifier for the skill. Must be lowercase with hyphens (kebab-case).
+  
+  **Examples:**
+  - `frontend-design`
+  - `pr-review-helper`
+  - `deploy-to-vercel`
+  
+  <Warning>
+    Skill names must be unique within a repository. Duplicate names will be skipped during installation.
+  </Warning>
+</ParamField>
+
+<ParamField path="description" type="string" required>
+  Brief explanation of what the skill does and when to use it. This appears in skill listings and helps agents decide when to activate the skill.
+  
+  **Best practices:**
+  - Keep it concise (1-2 sentences)
+  - Focus on the "what" and "when"
+  - Mention key capabilities or use cases
+  
+  **Example:**
+  ```yaml
+  description: Helps create and review GitHub pull requests following team conventions and best practices
+  ```
+</ParamField>
+
+### Optional Fields
+
+<ParamField path="metadata" type="object">
+  Additional metadata for skill behavior and visibility.
+  
+  **Subfields:**
+  
+  <ParamField path="metadata.internal" type="boolean" default={false}>
+    Set to `true` to hide the skill from normal discovery. Internal skills are only visible when `INSTALL_INTERNAL_SKILLS=1` is set.
+    
+    **Use cases:**
+    - Work-in-progress skills
+    - Internal tooling not meant for public use
+    - Experimental features under development
+    
+    **Example:**
+    ```yaml
+    metadata:
+      internal: true
+    ```
+  </ParamField>
+</ParamField>
+
+## Markdown Content
+
+The body of the `SKILL.md` file contains instructions for the agent. Use standard markdown formatting.
+
+### Recommended Sections
+
+<AccordionGroup>
+  <Accordion title="Skill Title" icon="heading">
+    A clear, descriptive title (H1) that matches or expands on the skill name.
+    
+    ```markdown
+    # Frontend Design System
+    ```
+  </Accordion>
+
+  <Accordion title="When to Use" icon="circle-question">
+    Describe scenarios where this skill should be activated.
+    
+    ```markdown
+    ## When to Use
+    
+    Use this skill when:
+    - Creating new UI components
+    - Implementing design system guidelines
+    - Ensuring accessibility compliance
+    ```
+  </Accordion>
+
+  <Accordion title="Instructions / Steps" icon="list-ol">
+    Detailed instructions for the agent to follow.
+    
+    ```markdown
+    ## Instructions
+    
+    1. Review the design system documentation
+    2. Identify the appropriate component patterns
+    3. Implement using the design tokens
+    4. Verify accessibility requirements
+    ```
+  </Accordion>
+
+  <Accordion title="Examples" icon="code">
+    Code examples or templates (optional but helpful).
+    
+    ```markdown
+    ## Example
+    
+    \`\`\`typescript
+    // Example component implementation
+    export const Button = ({ variant, children }) => {
+      return <button className={styles[variant]}>{children}</button>
+    }
+    \`\`\`
+    ```
+  </Accordion>
+
+  <Accordion title="Resources" icon="link">
+    Links to relevant documentation or tools (optional).
+    
+    ```markdown
+    ## Resources
+    
+    - [Design System Docs](https://example.com/design-system)
+    - [Component Library](https://example.com/components)
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Complete Example
+
+Here's a complete example of a well-structured skill:
+
+```markdown
+---
+name: pr-review-helper
+description: Helps review pull requests by checking code quality, tests, and documentation
+---
+
+# Pull Request Review Helper
+
+This skill guides thorough code reviews following best practices.
+
+## When to Use
+
+Activate this skill when:
+- Reviewing a teammate's pull request
+- Preparing your own PR for review
+- Checking if a PR meets merge requirements
+
+## Review Checklist
+
+### Code Quality
+
+1. **Readability**: Is the code easy to understand?
+2. **Consistency**: Does it follow project conventions?
+3. **Complexity**: Is the logic unnecessarily complex?
+
+### Testing
+
+1. Are new features covered by tests?
+2. Do existing tests still pass?
+3. Are edge cases considered?
+
+### Documentation
+
+1. Are public APIs documented?
+2. Are breaking changes noted?
+3. Is the PR description clear?
+
+## Review Comments
+
+When leaving feedback:
+
+- **Be specific**: Point to exact lines and suggest improvements
+- **Be kind**: Assume good intent and use collaborative language
+- **Be clear**: Distinguish between required changes and suggestions
+
+## Example Feedback
+
+```markdown
+**Required:** This function needs error handling for null values.
+Suggestion: Consider extracting this logic into a separate helper.
+```
+
+## Resources
+
+- [Code Review Guidelines](https://example.com/code-review)
+- [Testing Best Practices](https://example.com/testing)
+```
+
+## Skill Discovery Locations
+
+The Skills CLI searches for `SKILL.md` files in these locations within a repository:
+
+<Tabs>
+  <Tab title="Priority Locations">
+    These directories are searched first:
+    
+    - Root directory (if it contains `SKILL.md`)
+    - `skills/`
+    - `skills/.curated/`
+    - `skills/.experimental/`
+    - `skills/.system/`
+  </Tab>
+  
+  <Tab title="Agent-Specific">
+    Agent configuration directories:
+    
+    - `.agents/skills/`
+    - `.agent/skills/`
+    - `.claude/skills/`
+    - `.cline/skills/`
+    - `.codex/skills/`
+    - `.cursor/skills/`
+    - `.goose/skills/`
+    - And 20+ more agent directories
+  </Tab>
+  
+  <Tab title="Plugin Manifests">
+    Skills can also be declared in plugin manifests:
+    
+    - `.claude-plugin/marketplace.json`
+    - `.claude-plugin/plugin.json`
+    
+    See [Plugin Manifest Discovery](#plugin-manifest-discovery) below.
+  </Tab>
+  
+  <Tab title="Recursive Search">
+    If no skills are found in priority locations, the CLI performs a recursive search of the entire repository (excluding `node_modules`, `.git`, etc.).
+    
+    Use `--full-depth` flag to search all subdirectories even when a root `SKILL.md` exists.
+  </Tab>
+</Tabs>
+
+## Plugin Manifest Discovery
+
+For compatibility with the [Claude Code plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces), skills can be declared in manifest files:
+
+### `.claude-plugin/marketplace.json`
+
+```json
+{
+  "metadata": {
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "my-plugin",
+      "source": "my-plugin",
+      "skills": [
+        "./skills/review",
+        "./skills/test"
+      ]
+    }
+  ]
+}
+```
+
+### `.claude-plugin/plugin.json`
+
+Similar structure for individual plugin definitions.
+
+<Info>
+  Skills discovered via plugin manifests are associated with their parent plugin, making it easy to group related skills.
+</Info>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Keep it focused" icon="bullseye">
+    Each skill should do one thing well. Create multiple focused skills rather than one large skill.
+  </Card>
+  
+  <Card title="Be specific" icon="magnifying-glass">
+    Provide concrete instructions and examples. Avoid vague guidance like "follow best practices."
+  </Card>
+  
+  <Card title="Use sections" icon="list">
+    Organize instructions with clear headings and numbered steps. This helps agents parse and follow the guidance.
+  </Card>
+  
+  <Card title="Test thoroughly" icon="flask">
+    Test your skill with your target agent to ensure it works as expected. Different agents may interpret instructions differently.
+  </Card>
+</CardGroup>
+
+## Validation Rules
+
+The Skills CLI validates skills during discovery:
+
+<Steps>
+  <Step title="Frontmatter must be valid YAML">
+    Use a YAML validator to check syntax. Common issues:
+    - Missing closing quotes
+    - Incorrect indentation
+    - Invalid special characters
+  </Step>
+  
+  <Step title="Required fields must exist">
+    Both `name` and `description` must be present and be strings (not numbers or booleans).
+  </Step>
+  
+  <Step title="Name must be lowercase">
+    Use kebab-case: `my-skill-name` (not `My Skill Name` or `my_skill_name`)
+  </Step>
+  
+  <Step title="No path traversal in names">
+    Names cannot contain `..`, `/`, or other path manipulation characters.
+  </Step>
+</Steps>
+
+<Warning>
+  Skills that fail validation are silently skipped during discovery. Use `--list` flag to see which skills were found.
+</Warning>
+
+## Internal Skills
+
+Skills can be hidden from normal discovery:
+
+```yaml
+---
+name: experimental-feature
+description: Work-in-progress feature for internal testing
+metadata:
+  internal: true
+---
+```
+
+**To install internal skills:**
+
+```bash
+INSTALL_INTERNAL_SKILLS=1 npx skills add owner/repo --list
+INSTALL_INTERNAL_SKILLS=1 npx skills add owner/repo
+```
+
+## Creating a New Skill
+
+Use the `init` command to create a skill template:
+
+```bash
+# Create in current directory
+npx skills init
+
+# Create in subdirectory
+npx skills init my-awesome-skill
+```
+
+This generates a `SKILL.md` template with proper frontmatter structure.
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="CLI Options" icon="terminal" href="/api/cli-options">
+    Learn how to install and manage skills
+  </Card>
+  
+  <Card title="Agent Config" icon="gear" href="/api/agent-config">
+    Understand agent-specific configurations
+  </Card>
+  
+  <Card title="Contributing" icon="code-pull-request" href="/resources/contributing">
+    Guidelines for creating and sharing skills
+  </Card>
+  
+  <Card title="Agent Skills Spec" icon="book" href="https://agentskills.io">
+    Official specification for agent skills
+  </Card>
+</CardGroup>

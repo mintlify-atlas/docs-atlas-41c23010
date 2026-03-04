@@ -1,0 +1,473 @@
+---
+title: Telemetry
+description: Anonymous usage tracking and how to disable it
+icon: chart-line
+---
+
+The Skills CLI collects **anonymous usage data** to help improve the tool. No personal information or skill contents are collected.
+
+<Info>
+  Telemetry is **automatically disabled** in CI environments and can be disabled manually via environment variables.
+</Info>
+
+---
+
+## What Data is Collected
+
+The CLI tracks these events:
+
+<AccordionGroup>
+  <Accordion title="Install Event" icon="download">
+    Tracked when skills are installed via `skills add`
+
+    <CodeGroup>
+    ```typescript Data Structure
+    {
+      event: 'install',
+      source: 'vercel-labs/agent-skills',  // Repository/source
+      skills: '3',                          // Number of skills installed
+      agents: 'claude-code,cursor',        // Target agents (comma-separated)
+      global: '1',                         // 1 if --global flag used
+      skillFiles: '{...}',                 // JSON map of skill name → path
+      sourceType: 'github',                // Source type (github, local, etc.)
+      v: '1.2.3',                          // CLI version
+      ci: '0'                              // 1 if running in CI
+    }
+    ```
+    </CodeGroup>
+  </Accordion>
+
+  <Accordion title="Remove Event" icon="trash">
+    Tracked when skills are removed via `skills remove`
+
+    <CodeGroup>
+    ```typescript Data Structure
+    {
+      event: 'remove',
+      source: 'vercel-labs/agent-skills',  // Repository (if known)
+      skills: '2',                          // Number of skills removed
+      agents: 'cursor',                    // Target agents
+      global: '1',                         // 1 if --global flag used
+      sourceType: 'github',                // Source type
+      v: '1.2.3',                          // CLI version
+      ci: '0'                              // 1 if running in CI
+    }
+    ```
+    </CodeGroup>
+  </Accordion>
+
+  <Accordion title="Check Event" icon="magnifying-glass">
+    Tracked when checking for updates via `skills check`
+
+    <CodeGroup>
+    ```typescript Data Structure
+    {
+      event: 'check',
+      skillCount: '5',           // Number of skills checked
+      updatesAvailable: '2',     // Number of updates found
+      v: '1.2.3',               // CLI version
+      ci: '0'                   // 1 if running in CI
+    }
+    ```
+    </CodeGroup>
+  </Accordion>
+
+  <Accordion title="Update Event" icon="arrows-rotate">
+    Tracked when updating skills via `skills update`
+
+    <CodeGroup>
+    ```typescript Data Structure
+    {
+      event: 'update',
+      skillCount: '2',      // Number of skills with updates
+      successCount: '2',    // Number successfully updated
+      failCount: '0',       // Number that failed to update
+      v: '1.2.3',          // CLI version
+      ci: '0'              // 1 if running in CI
+    }
+    ```
+    </CodeGroup>
+  </Accordion>
+
+  <Accordion title="Find Event" icon="search">
+    Tracked when searching for skills via `skills find`
+
+    <CodeGroup>
+    ```typescript Data Structure
+    {
+      event: 'find',
+      query: 'typescript',   // Search query (if provided)
+      resultCount: '12',     // Number of results found
+      interactive: '1',      // 1 if interactive mode used
+      v: '1.2.3',           // CLI version
+      ci: '0'               // 1 if running in CI
+    }
+    ```
+    </CodeGroup>
+  </Accordion>
+
+  <Accordion title="Sync Event" icon="rotate">
+    Tracked when syncing skills from node_modules via `skills experimental_sync`
+
+    <CodeGroup>
+    ```typescript Data Structure
+    {
+      event: 'experimental_sync',
+      skillCount: '8',       // Number of skills found
+      successCount: '8',     // Number successfully synced
+      agents: 'cursor',      // Target agents
+      v: '1.2.3',           // CLI version
+      ci: '0'               // 1 if running in CI
+    }
+    ```
+    </CodeGroup>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## What is NOT Collected
+
+<Warning>
+  The following data is **never** collected:
+  - Personal information (name, email, IP address)
+  - Skill file contents
+  - Local file paths (only skill names and counts)
+  - Repository contents
+  - Authentication tokens
+  - Environment variables (except telemetry opt-out flags)
+</Warning>
+
+---
+
+## How Telemetry Works
+
+### Implementation
+
+Telemetry is implemented in `src/telemetry.ts`:
+
+<Steps>
+  <Step title="Check if enabled">
+    Verify telemetry is not disabled via environment variables or CI detection
+  </Step>
+
+  <Step title="Build request">
+    Construct a URL with event data as query parameters
+  </Step>
+
+  <Step title="Fire and forget">
+    Send a GET request to the telemetry endpoint (non-blocking, errors silently ignored)
+  </Step>
+</Steps>
+
+### Endpoint
+
+<CodeGroup>
+```text Telemetry URL
+https://add-skill.vercel.sh/t
+```
+</CodeGroup>
+
+### Request Format
+
+Telemetry is sent as URL query parameters:
+
+<CodeGroup>
+```text Example Request
+GET https://add-skill.vercel.sh/t?event=install&source=vercel-labs%2Fagent-skills&skills=3&agents=cursor&v=1.2.3&ci=0
+```
+</CodeGroup>
+
+---
+
+## Automatic CI Detection
+
+Telemetry is **automatically disabled** when running in CI environments.
+
+### Detected CI Platforms
+
+The CLI checks for these environment variables:
+
+<CardGroup cols={3}>
+  <Card title="CI" icon="circle-check">
+    `CI=true`
+  </Card>
+  <Card title="GitHub Actions" icon="github">
+    `GITHUB_ACTIONS=true`
+  </Card>
+  <Card title="GitLab CI" icon="gitlab">
+    `GITLAB_CI=true`
+  </Card>
+  <Card title="CircleCI" icon="circle">
+    `CIRCLECI=true`
+  </Card>
+  <Card title="Travis CI" icon="t">
+    `TRAVIS=true`
+  </Card>
+  <Card title="Buildkite" icon="b">
+    `BUILDKITE=true`
+  </Card>
+  <Card title="Jenkins" icon="j">
+    `JENKINS_URL` set
+  </Card>
+  <Card title="TeamCity" icon="t">
+    `TEAMCITY_VERSION` set
+  </Card>
+</CardGroup>
+
+### CI Flag
+
+When running in CI, events include `ci=1` in the telemetry data (if telemetry is manually enabled).
+
+---
+
+## Disabling Telemetry
+
+You can disable telemetry in two ways:
+
+### Option 1: DISABLE_TELEMETRY
+
+<CodeGroup>
+```bash Temporary
+DISABLE_TELEMETRY=1 npx skills add vercel-labs/agent-skills
+```
+
+```bash Permanent (Bash/Zsh)
+echo 'export DISABLE_TELEMETRY=1' >> ~/.bashrc
+source ~/.bashrc
+```
+
+```bash Permanent (Fish)
+set -Ux DISABLE_TELEMETRY 1
+```
+</CodeGroup>
+
+### Option 2: DO_NOT_TRACK
+
+<CodeGroup>
+```bash Temporary
+DO_NOT_TRACK=1 npx skills add vercel-labs/agent-skills
+```
+
+```bash Permanent (Bash/Zsh)
+echo 'export DO_NOT_TRACK=1' >> ~/.bashrc
+source ~/.bashrc
+```
+
+```bash Permanent (Fish)
+set -Ux DO_NOT_TRACK 1
+```
+</CodeGroup>
+
+<Info>
+  Both environment variables have the same effect. Use whichever you prefer or is already set by other tools.
+</Info>
+
+---
+
+## Security Audit Telemetry
+
+In addition to usage telemetry, the CLI fetches **security audit data** from a separate API when installing skills.
+
+### Audit API
+
+<CodeGroup>
+```text Audit URL
+https://add-skill.vercel.sh/audit
+```
+</CodeGroup>
+
+### Request Format
+
+<CodeGroup>
+```text Example Request
+GET https://add-skill.vercel.sh/audit?source=vercel-labs%2Fagent-skills&skills=frontend-design,skill-creator
+```
+</CodeGroup>
+
+### Response Format
+
+<CodeGroup>
+```json Audit Response
+{
+  "vercel-labs/agent-skills": {
+    "frontend-design": {
+      "risk": "safe",
+      "alerts": 0,
+      "score": 100,
+      "analyzedAt": "2024-01-15T10:30:00.000Z"
+    },
+    "skill-creator": {
+      "risk": "low",
+      "alerts": 1,
+      "score": 85,
+      "analyzedAt": "2024-01-15T10:30:00.000Z"
+    }
+  }
+}
+```
+</CodeGroup>
+
+### Risk Levels
+
+<CardGroup cols={3}>
+  <Card title="Safe" icon="shield-check" color="green">
+    No security concerns detected
+  </Card>
+  <Card title="Low" icon="shield" color="blue">
+    Minor concerns, generally safe
+  </Card>
+  <Card title="Medium" icon="shield-halved" color="yellow">
+    Some concerns, review recommended
+  </Card>
+  <Card title="High" icon="triangle-exclamation" color="orange">
+    Significant concerns, caution advised
+  </Card>
+  <Card title="Critical" icon="octagon-exclamation" color="red">
+    Severe concerns, installation not recommended
+  </Card>
+  <Card title="Unknown" icon="question" color="gray">
+    No audit data available
+  </Card>
+</CardGroup>
+
+### Timeout
+
+Audit requests timeout after **3 seconds** to avoid blocking installations. If the API doesn't respond in time, the installation proceeds without audit data.
+
+<Info>
+  Audit data is **informational only** and never blocks installations. You can always install skills regardless of risk level.
+</Info>
+
+---
+
+## Source Code Reference
+
+The telemetry implementation is in `src/telemetry.ts`:
+
+<CodeGroup>
+```typescript Key Functions
+import { track, fetchAuditData, setVersion } from './telemetry';
+
+// Set CLI version (tracked with all events)
+setVersion('1.2.3');
+
+// Track an event
+track({
+  event: 'install',
+  source: 'vercel-labs/agent-skills',
+  skills: '3',
+  agents: 'cursor',
+  sourceType: 'github'
+});
+
+// Fetch security audit data
+const auditData = await fetchAuditData(
+  'vercel-labs/agent-skills',
+  ['frontend-design', 'skill-creator'],
+  3000  // timeout in ms
+);
+```
+</CodeGroup>
+
+### API Reference
+
+<ParamField path="track" type="function">
+  Track a telemetry event
+
+  <Expandable title="Signature">
+    ```typescript
+    function track(data: TelemetryData): void
+    ```
+
+    <ParamField body="data" type="TelemetryData" required>
+      Event data object (see event types above)
+    </ParamField>
+
+    <ResponseField name="returns" type="void">
+      No return value (fire and forget)
+    </ResponseField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="fetchAuditData" type="function">
+  Fetch security audit data for skills
+
+  <Expandable title="Signature">
+    ```typescript
+    async function fetchAuditData(
+      source: string,
+      skillSlugs: string[],
+      timeoutMs?: number
+    ): Promise<AuditResponse | null>
+    ```
+
+    <ParamField body="source" type="string" required>
+      Repository identifier (e.g., `"owner/repo"`)
+    </ParamField>
+
+    <ParamField body="skillSlugs" type="string[]" required>
+      Array of skill names to audit
+    </ParamField>
+
+    <ParamField body="timeoutMs" type="number">
+      Request timeout in milliseconds (default: 3000)
+    </ParamField>
+
+    <ResponseField name="returns" type="AuditResponse | null">
+      Audit data or `null` on error/timeout
+    </ResponseField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="setVersion" type="function">
+  Set CLI version for telemetry tracking
+
+  <Expandable title="Signature">
+    ```typescript
+    function setVersion(version: string): void
+    ```
+
+    <ParamField body="version" type="string" required>
+      CLI version string (e.g., `"1.2.3"`)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+---
+
+## Privacy Commitment
+
+The Skills CLI is committed to user privacy:
+
+<CardGroup cols={2}>
+  <Card title="Open Source" icon="code-branch">
+    All telemetry code is open source and auditable on GitHub
+  </Card>
+  
+  <Card title="No PII" icon="user-shield">
+    No personally identifiable information is ever collected
+  </Card>
+  
+  <Card title="Opt-Out" icon="circle-xmark">
+    Easy to disable via environment variables
+  </Card>
+  
+  <Card title="Non-Blocking" icon="forward">
+    Telemetry failures never affect CLI functionality
+  </Card>
+</CardGroup>
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Environment Variables" icon="code" href="/advanced/environment-variables">
+    See all environment variables, including telemetry controls
+  </Card>
+  
+  <Card title="Update System" icon="arrows-rotate" href="/advanced/update-system">
+    Learn how update checks send telemetry data
+  </Card>
+</CardGroup>

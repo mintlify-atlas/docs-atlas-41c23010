@@ -1,0 +1,234 @@
+---
+title: 'skills find'
+description: 'Search for skills interactively or by keyword'
+---
+
+## Usage
+
+```bash
+skills find [query]
+```
+
+## Description
+
+The `find` command helps you discover and install skills from the skills ecosystem. It provides two modes:
+
+1. **Interactive mode** (no query): Fuzzy search with keyboard navigation
+2. **Direct search** (with query): Shows matching results immediately
+
+After selecting a skill, you can install it directly without leaving the CLI.
+
+## Arguments
+
+<ParamField path="query" type="string">
+  Optional search keyword(s) to find skills. When provided, displays matching results immediately.
+  
+  **Examples:**
+  - `typescript`
+  - `web design`
+  - `commit`
+</ParamField>
+
+## Interactive Mode
+
+When run without a query, `skills find` provides a real-time fuzzy search interface:
+
+<Steps>
+
+<Step title="Type to Search">
+  Start typing to search for skills. Results appear as you type (minimum 2 characters).
+  
+  ```
+  Search skills: type_
+  ```
+</Step>
+
+<Step title="Navigate Results">
+  Use arrow keys to navigate:
+  - **Up/Down**: Move between results
+  - **Enter**: Select and install skill
+  - **Esc**: Cancel search
+  
+  ```
+  > frontend-design vercel-labs/agent-skills 1.2K installs
+    web-design-guidelines vercel-labs/agent-skills 856 installs
+    skill-creator vercel-labs/agent-skills 642 installs
+  ```
+</Step>
+
+<Step title="Install Selected">
+  Press Enter to install the selected skill. The CLI will:
+  1. Show installation details
+  2. Prompt for agents (if not already detected)
+  3. Install the skill
+  
+  The skill is installed directly using `skills add` with the `--skill` flag.
+</Step>
+
+</Steps>
+
+## Direct Search Mode
+
+When run with a query, displays matching results immediately:
+
+```bash
+$ skills find typescript
+
+Install with npx skills add <owner/repo@skill>
+
+vercel-labs/agent-skills@typescript-guide 1.2K installs
+└ https://skills.sh/typescript-guide
+
+owner/repo@typescript-best-practices 856 installs
+└ https://skills.sh/typescript-best-practices
+```
+
+The output shows:
+- **Package and skill**: `owner/repo@skill-name`
+- **Install count**: Number of times installed
+- **URL**: Link to skill details on skills.sh
+
+## Examples
+
+<CodeGroup>
+
+```bash Interactive Search
+# Launch interactive fuzzy search
+skills find
+
+# Starts with empty search, type to filter
+# Use arrow keys to navigate, Enter to select
+```
+
+```bash Direct Search
+# Search by keyword
+skills find typescript
+
+# Search for web design skills
+skills find "web design"
+
+# Search for commit-related skills
+skills find commit
+```
+
+```bash Aliases
+# Using 'search' alias
+skills search typescript
+
+# Using short aliases
+skills f typescript
+skills s typescript
+```
+
+</CodeGroup>
+
+## Search Features
+
+### Fuzzy Matching
+
+The interactive search uses fuzzy matching, so you can:
+- Type partial words: `type` matches "typescript", "prototype", etc.
+- Skip characters: `fend` matches "frontend-design"
+- Match anywhere: `guide` matches "typescript-guide", "design-guidelines", etc.
+
+### Adaptive Debouncing
+
+Search requests are debounced based on query length:
+- **2 characters**: 250ms delay (user still typing)
+- **3 characters**: 200ms delay
+- **4 characters**: 150ms delay
+- **5+ characters**: 150ms delay
+
+This provides faster results as you type more specific queries.
+
+### Result Ranking
+
+Results are ranked by:
+1. **Relevance**: How well the skill matches your query
+2. **Popularity**: Install count (shown as "1.2K installs")
+
+## Output Format
+
+### Interactive Mode
+
+```
+Search skills: typescript_
+
+  > typescript-guide vercel-labs/agent-skills 1.2K installs
+    typescript-best-practices owner/repo 856 installs
+    pr-review vercel-labs/agent-skills 642 installs
+
+up/down navigate | enter select | esc cancel
+```
+
+- **Selected item**: Shown with `>` and bold text
+- **Package info**: Shows source repository
+- **Install count**: Formatted as "1.2K", "856", etc.
+- **Loading indicator**: "..." appears while fetching results
+
+### Direct Search Mode
+
+```
+Install with npx skills add <owner/repo@skill>
+
+vercel-labs/agent-skills@typescript-guide 1.2K installs
+└ https://skills.sh/typescript-guide
+
+owner/repo@typescript-best-practices 856 installs
+└ https://skills.sh/typescript-best-practices
+```
+
+## Non-Interactive Usage
+
+When used in non-interactive environments (like coding agents), the CLI provides a helpful tip:
+
+```bash
+$ skills find typescript
+
+Tip: if running in a coding agent, follow these steps:
+  1) npx skills find [query]
+  2) npx skills add <owner/repo@skill>
+
+[results shown here]
+```
+
+## Installation After Search
+
+When you select a skill in interactive mode:
+
+1. The skill source and name are extracted
+2. `skills add` is called automatically with:
+   - Source: `owner/repo`
+   - Skill filter: `--skill skill-name`
+3. Normal installation flow proceeds (agent selection, scope, confirmation)
+
+**Example:**
+```bash
+# After selecting "frontend-design" from "vercel-labs/agent-skills"
+# Internally runs:
+skills add vercel-labs/agent-skills --skill frontend-design
+```
+
+## Search API
+
+The search queries the Skills directory API at:
+- **Default**: `https://skills.sh/api/search`
+- **Custom**: Set `SKILLS_API_URL` environment variable
+
+```bash
+# Use custom search endpoint
+SKILLS_API_URL=https://custom.example.com skills find typescript
+```
+
+## Aliases
+
+The following aliases are available:
+- `skills search` → `skills find`
+- `skills f` → `skills find`
+- `skills s` → `skills find`
+
+## Related Commands
+
+- [`skills add`](/commands/add) - Install skills from repositories
+- [`skills list`](/commands/list) - List installed skills
+- [`skills remove`](/commands/remove) - Remove installed skills

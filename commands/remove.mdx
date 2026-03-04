@@ -1,0 +1,304 @@
+---
+title: 'skills remove'
+description: 'Remove installed skills from agents'
+---
+
+## Usage
+
+```bash
+skills remove [skills...] [options]
+skills rm [skills...] [options]
+```
+
+## Description
+
+The `remove` command uninstalls skills from agents. It removes:
+- The canonical skill directory (`.agents/skills/skill-name`)
+- Symlinks from agent directories
+- Entries from the skill lock file (for global installs)
+
+If no skill names are provided, an interactive selection menu is shown.
+
+## Arguments
+
+<ParamField path="skills" type="string[]">
+  Optional skill name(s) to remove. Supports multiple skills separated by spaces.
+  
+  **Examples:**
+  - `frontend-design`
+  - `skill-creator web-design`
+  
+  If omitted, shows an interactive multi-select menu.
+</ParamField>
+
+## Options
+
+<ParamField path="-g, --global" type="boolean">
+  Remove from global scope (`~/.agents/skills/`) instead of project scope (`./.agents/skills/`).
+  
+  **Default:** `false` (removes from project)
+</ParamField>
+
+<ParamField path="-a, --agent" type="string[]">
+  Remove from specific agents only. Accepts multiple agent names or `'*'` for all agents.
+  
+  **Examples:**
+  - `-a claude-code -a cursor`
+  - `--agent '*'` (all agents)
+  
+  By default, removes from all known agents to clean up any ghost symlinks.
+</ParamField>
+
+<ParamField path="-s, --skill" type="string[]">
+  Specify which skills to remove. Accepts multiple skill names or `'*'` for all skills.
+  
+  **Examples:**
+  - `-s frontend-design -s web-design`
+  - `--skill '*'` (all skills)
+  
+  This is useful when combined with `--agent` to remove specific skills from specific agents.
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompts. Automatically confirms removal.
+  
+  **Default:** `false`
+  
+  <Warning>Use with caution - skills will be removed immediately without confirmation.</Warning>
+</ParamField>
+
+<ParamField path="--all" type="boolean">
+  Shorthand for `--skill '*' --agent '*' -y`. Removes all skills from all agents without prompts.
+  
+  **Default:** `false`
+  
+  <Warning>This will remove ALL installed skills immediately!</Warning>
+</ParamField>
+
+## Examples
+
+<CodeGroup>
+
+```bash Interactive Removal
+# Show interactive selection menu
+skills remove
+
+# Select multiple skills using space bar
+# Press enter to confirm
+```
+
+```bash Remove by Name
+# Remove a specific skill
+skills remove frontend-design
+
+# Remove multiple skills
+skills remove frontend-design web-design-guidelines
+
+# Remove without confirmation
+skills remove frontend-design -y
+```
+
+```bash Global Removal
+# Remove from global scope
+skills remove --global frontend-design
+
+# Remove all global skills
+skills remove -g --all
+```
+
+```bash Remove from Specific Agents
+# Remove from specific agents only
+skills remove --agent claude-code cursor my-skill
+
+# Remove a skill from all agents
+skills remove my-skill --agent '*'
+
+# Remove all skills from a specific agent
+skills remove --skill '*' -a cursor
+```
+
+```bash Bulk Removal
+# Remove all skills without confirmation
+skills remove --all
+
+# Remove multiple specific skills without confirmation
+skills remove skill1 skill2 skill3 -y
+```
+
+```bash Using Alias
+# Using 'rm' alias
+skills rm my-skill
+
+# Using 'r' alias
+skills r my-skill
+```
+
+</CodeGroup>
+
+## Interactive Selection
+
+When run without skill names, the CLI shows an interactive multi-select menu:
+
+<Steps>
+
+<Step title="Scan for Skills">
+  The CLI scans for installed skills in:
+  - Canonical directory (`.agents/skills/` or `~/.agents/skills/`)
+  - All agent-specific directories
+  
+  ```
+  ◇  Found 5 unique installed skill(s)
+  ```
+</Step>
+
+<Step title="Select Skills">
+  Use arrow keys and space bar to select skills:
+  - **Up/Down**: Navigate
+  - **Space**: Toggle selection
+  - **Enter**: Confirm
+  - **Esc**: Cancel
+  
+  ```
+  ◆  Select skills to remove (space to toggle)
+  │  ◼ frontend-design
+  │  ◻ web-design-guidelines
+  │  ◼ skill-creator
+  │  ◻ pr-review
+  └  ◻ commit-message
+  ```
+</Step>
+
+<Step title="Confirm Removal">
+  Review selected skills and confirm:
+  
+  ```
+  Skills to remove:
+    • frontend-design
+    • skill-creator
+  
+  ◆  Are you sure you want to uninstall 2 skill(s)? … yes
+  ```
+</Step>
+
+</Steps>
+
+## Removal Process
+
+The removal process handles:
+
+1. **Agent-specific removals**: Removes skill from each specified agent's directory
+2. **Canonical removal**: Removes the canonical copy (only if no other agents are using it)
+3. **Lock file updates**: Updates `~/.agents/.skill-lock.json` for global installs
+4. **Symlink cleanup**: Handles both symlinks and copied files
+
+### Safety Features
+
+<CardGroup cols={2}>
+  <Card title="Selective Removal" icon="shield-check">
+    When removing from specific agents with `--agent`, the canonical copy is only removed if no other installed agents are using it.
+  </Card>
+  <Card title="Ghost Cleanup" icon="broom">
+    Automatically cleans up ghost symlinks from agents that may no longer be installed.
+  </Card>
+</CardGroup>
+
+## Output Example
+
+```bash
+$ skills remove frontend-design web-design
+
+◇  Found 2 unique installed skill(s)
+
+Skills to remove:
+  • frontend-design
+  • web-design
+
+◆  Are you sure you want to uninstall 2 skill(s)? … yes
+◇  Removal process complete
+◆  Successfully removed 2 skill(s)
+
+◆  Done!
+```
+
+### Failed Removals
+
+If any skills fail to remove, details are shown:
+
+```bash
+◆  Successfully removed 2 skill(s)
+◆  Failed to remove 1 skill(s)
+  ✗ my-skill: EACCES: permission denied
+```
+
+## Understanding Scope
+
+### Project Scope (Default)
+
+Removes skills from the current project:
+- Canonical directory: `./.agents/skills/`
+- Agent directories: `./<agent>/skills/`
+- Does NOT affect global skills
+
+```bash
+skills remove my-skill
+```
+
+### Global Scope
+
+Removes skills from your home directory:
+- Canonical directory: `~/.agents/skills/`
+- Agent directories: `~/<agent>/skills/`
+- Updates global lock file: `~/.agents/.skill-lock.json`
+- Does NOT affect project skills
+
+```bash
+skills remove my-skill -g
+```
+
+## Help
+
+View detailed help for the remove command:
+
+```bash
+skills remove --help
+```
+
+Outputs:
+```
+Usage: skills remove [skills...] [options]
+
+Description:
+  Remove installed skills from agents. If no skill names are provided,
+  an interactive selection menu will be shown.
+
+Arguments:
+  skills            Optional skill names to remove (space-separated)
+
+Options:
+  -g, --global       Remove from global scope (~/) instead of project scope
+  -a, --agent        Remove from specific agents (use '*' for all agents)
+  -s, --skill        Specify skills to remove (use '*' for all skills)
+  -y, --yes          Skip confirmation prompts
+  --all              Shorthand for --skill '*' --agent '*' -y
+
+[examples shown...]
+```
+
+## Aliases
+
+The following aliases are available:
+- `skills rm` → `skills remove`
+- `skills r` → `skills remove`
+
+## Exit Codes
+
+| Code | Description |
+|------|-------------|
+| `0` | All skills removed successfully |
+| `1` | Invalid agent names provided |
+
+## Related Commands
+
+- [`skills add`](/commands/add) - Install new skills
+- [`skills list`](/commands/list) - List installed skills
+- [`skills update`](/commands/update) - Update skills to latest versions

@@ -1,0 +1,313 @@
+---
+title: Source Formats
+description: Learn about all the ways to install skills from various sources
+---
+
+The Skills CLI supports multiple source formats for installing skills, from GitHub shorthand to local directories. Understanding these formats helps you install skills from anywhere.
+
+## Supported Formats
+
+The CLI automatically detects the source type and handles installation appropriately.
+
+### GitHub Shorthand
+
+The simplest way to install skills from GitHub:
+
+```bash
+# Owner/repo format
+npx skills add vercel-labs/agent-skills
+
+# Install specific skill by name
+npx skills add vercel-labs/agent-skills@frontend-design
+
+# Install from a subdirectory
+npx skills add vercel-labs/agent-skills/skills/web-design
+```
+
+<Info>
+The `owner/repo` format is automatically expanded to `https://github.com/owner/repo.git`
+</Info>
+
+### Full GitHub URLs
+
+You can also use complete GitHub URLs:
+
+```bash
+# Standard repository URL
+npx skills add https://github.com/vercel-labs/agent-skills
+
+# URL with branch
+npx skills add https://github.com/vercel-labs/agent-skills/tree/main
+
+# URL pointing to specific skill folder
+npx skills add https://github.com/vercel-labs/agent-skills/tree/main/skills/web-design
+```
+
+### GitLab URLs
+
+Full support for GitLab repositories, including subgroups:
+
+```bash
+# GitLab repository
+npx skills add https://gitlab.com/org/repo
+
+# GitLab with subgroups
+npx skills add https://gitlab.com/group/subgroup/repo
+
+# GitLab with branch
+npx skills add https://gitlab.com/org/repo/-/tree/main
+
+# GitLab with branch and path
+npx skills add https://gitlab.com/org/repo/-/tree/main/skills/my-skill
+```
+
+<Note>
+GitLab URLs use the `/-/tree/` pattern which is unique to GitLab. The CLI automatically detects this.
+</Note>
+
+### Git URLs
+
+Any valid git URL is supported:
+
+```bash
+# Git SSH URL
+npx skills add git@github.com:vercel-labs/agent-skills.git
+
+# Git HTTP URL
+npx skills add https://github.com/vercel-labs/agent-skills.git
+
+# Self-hosted git server
+npx skills add git@git.company.com:team/skills.git
+```
+
+### Local Paths
+
+Install skills from your local filesystem:
+
+```bash
+# Relative path
+npx skills add ./my-local-skills
+
+# Absolute path
+npx skills add /home/user/my-skills
+
+# Current directory
+npx skills add .
+
+# Parent directory
+npx skills add ..
+```
+
+<Warning>
+Local paths must start with `./`, `../`, `/`, or be absolute (e.g., `C:\` on Windows). This prevents ambiguity with GitHub shorthand.
+</Warning>
+
+## Source Detection Logic
+
+The CLI parses sources in this order:
+
+1. **Local paths** - Absolute or relative paths (`.`, `..`, `./`, `/`, `C:\`)
+2. **GitHub URLs with paths** - `github.com/owner/repo/tree/branch/path`
+3. **GitHub URLs with branch** - `github.com/owner/repo/tree/branch`
+4. **GitHub repository URLs** - `github.com/owner/repo`
+5. **GitLab URLs with paths** - `gitlab.com/org/repo/-/tree/branch/path`
+6. **GitLab URLs with branch** - `gitlab.com/org/repo/-/tree/branch`
+7. **GitLab repository URLs** - `gitlab.com/org/repo`
+8. **GitHub shorthand with skill filter** - `owner/repo@skill-name`
+9. **GitHub shorthand with path** - `owner/repo/path/to/skill`
+10. **GitHub shorthand** - `owner/repo`
+11. **Well-known endpoints** - HTTP(S) URLs with `/.well-known/skills/index.json`
+12. **Direct git URLs** - Any other git-compatible URL
+
+## Special Formats
+
+### Installing Specific Skills
+
+You can filter which skills to install using the `@skill-name` syntax or `--skill` flag:
+
+```bash
+# Using @ syntax (shorthand)
+npx skills add vercel-labs/agent-skills@frontend-design
+
+# Using --skill flag
+npx skills add vercel-labs/agent-skills --skill frontend-design
+
+# Install multiple specific skills
+npx skills add vercel-labs/agent-skills --skill frontend-design --skill skill-creator
+
+# Skill names with spaces (must be quoted)
+npx skills add owner/repo --skill "Convex Best Practices"
+
+# Install all skills (explicit wildcard)
+npx skills add vercel-labs/agent-skills --skill '*'
+```
+
+### Branches and Refs
+
+Install from specific branches or tags:
+
+```bash
+# GitHub URL with branch
+npx skills add https://github.com/vercel-labs/agent-skills/tree/develop
+
+# GitLab URL with branch
+npx skills add https://gitlab.com/org/repo/-/tree/develop
+```
+
+<Info>
+For GitHub shorthand (`owner/repo`), the default branch is used automatically.
+</Info>
+
+### Subpaths
+
+Install skills from a subdirectory within a repository:
+
+```bash
+# GitHub shorthand with subpath
+npx skills add vercel-labs/agent-skills/skills/web-design
+
+# Full URL with subpath
+npx skills add https://github.com/vercel-labs/agent-skills/tree/main/skills/web-design
+
+# GitLab with subpath
+npx skills add https://gitlab.com/org/repo/-/tree/main/skills/my-skill
+```
+
+When a subpath is provided, the CLI searches for skills starting from that directory.
+
+## Source Aliases
+
+Some commonly used repositories have aliases:
+
+| Alias | Expands to |
+|-------|------------|
+| `coinbase/agentWallet` | `coinbase/agentic-wallet-skills` |
+
+More aliases may be added in future releases.
+
+## Listing Available Skills
+
+Before installing, preview available skills from a source:
+
+```bash
+# List skills in a repository
+npx skills add vercel-labs/agent-skills --list
+
+# List skills from local directory
+npx skills add ./my-skills --list
+
+# List skills from specific path
+npx skills add https://github.com/org/repo/tree/main/skills --list
+```
+
+This displays all discoverable skills without installing them.
+
+## Private Repositories
+
+For private repositories, ensure you have git credentials configured:
+
+### SSH Authentication
+
+```bash
+# Use SSH URL format
+npx skills add git@github.com:your-org/private-skills.git
+```
+
+### HTTPS with Credentials
+
+Configure git credentials helper:
+
+```bash
+# macOS/Linux
+git config --global credential.helper store
+
+# Windows
+git config --global credential.helper wincred
+
+# Then install (you'll be prompted for credentials once)
+npx skills add https://github.com/your-org/private-skills
+```
+
+<Warning>
+The CLI uses git to clone repositories. Make sure you have read access to the repository with your configured git credentials.
+</Warning>
+
+## Examples by Use Case
+
+<AccordionGroup>
+  <Accordion title="Installing from a monorepo">
+    ```bash
+    # Install all skills from a specific directory in the monorepo
+    npx skills add org/monorepo/packages/agent-skills
+    
+    # Install a specific skill from nested path
+    npx skills add org/monorepo/packages/agent-skills/skills/my-skill
+    ```
+  </Accordion>
+  
+  <Accordion title="Testing local skills before publishing">
+    ```bash
+    # Install from current directory
+    npx skills add .
+    
+    # Install from local clone of repository
+    npx skills add ~/projects/my-skills
+    
+    # Install specific skill from local directory
+    npx skills add ./my-skills --skill test-skill
+    ```
+  </Accordion>
+  
+  <Accordion title="Installing from self-hosted git">
+    ```bash
+    # SSH URL to self-hosted GitLab
+    npx skills add git@git.company.com:team/agent-skills.git
+    
+    # HTTPS URL to self-hosted GitHub Enterprise
+    npx skills add https://github.company.com/team/agent-skills.git
+    ```
+  </Accordion>
+  
+  <Accordion title="Installing from a fork">
+    ```bash
+    # Your forked repository
+    npx skills add your-username/agent-skills
+    
+    # Specific branch in your fork
+    npx skills add https://github.com/your-username/agent-skills/tree/my-feature
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="No skills found">
+    Ensure the repository contains valid `SKILL.md` files with `name` and `description` in the frontmatter. Check that skills are in [recognized directories](/guides/creating-skills#skill-discovery-locations).
+  </Accordion>
+  
+  <Accordion title="Git authentication failed">
+    For private repositories:
+    - Verify your SSH keys are configured: `ssh -T git@github.com`
+    - Or use HTTPS with credentials helper configured
+    - Check that you have read access to the repository
+  </Accordion>
+  
+  <Accordion title="Ambiguous source format">
+    If the CLI misinterprets your input:
+    - Use explicit URLs instead of shorthand
+    - For local paths, always start with `./` or use absolute paths
+    - Check for typos in owner/repo names
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Creating Skills" icon="plus" href="/guides/creating-skills">
+    Learn how to create your own skills
+  </Card>
+  <Card title="Installation Methods" icon="link" href="/guides/installation-methods">
+    Understand symlink vs copy installation
+  </Card>
+</CardGroup>

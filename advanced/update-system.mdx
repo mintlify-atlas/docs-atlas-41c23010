@@ -1,0 +1,426 @@
+---
+title: Update System
+description: How skills check and update commands work under the hood
+icon: arrows-rotate
+---
+
+The Skills CLI provides automatic update checking for installed skills via the `skills check` and `skills update` commands. These commands use a remote API to detect changes in skill repositories.
+
+## Overview
+
+The update system works by comparing the **skill folder hash** stored in your local lock file against the latest hash from the remote source (e.g., GitHub).
+
+<Steps>
+  <Step title="Read lock file">
+    The CLI reads `~/.agents/.skill-lock.json` to get all installed skills and their current `skillFolderHash` values
+  </Step>
+
+  <Step title="Request fresh hashes">
+    POST skill metadata to the update API at `https://add-skill.vercel.sh/check-updates` with `forceRefresh: true`
+  </Step>
+
+  <Step title="Compare hashes">
+    The API fetches fresh content from GitHub, computes the latest folder hash, and compares it to the hash you provided
+  </Step>
+
+  <Step title="Return updates">
+    The API returns a list of skills with different hashes (updates available)
+  </Step>
+</Steps>
+
+---
+
+## Check Command
+
+The `skills check` command checks for available updates without installing them.
+
+```bash
+skills check
+```
+
+### API Request
+
+The CLI sends a POST request to the update API:
+
+<CodeGroup>
+```json Request Body
+{
+  "skills": [
+    {
+      "name": "frontend-design",
+      "source": "vercel-labs/agent-skills",
+      "skillFolderHash": "a3f2c1d9e8b7..."
+    },
+    {
+      "name": "skill-creator",
+      "source": "vercel-labs/agent-skills",
+      "skillFolderHash": "f9b0e1d2c3a4..."
+    }
+  ],
+  "forceRefresh": true
+}
+```
+
+```json Response
+{
+  "updates": [
+    {
+      "name": "frontend-design",
+      "source": "vercel-labs/agent-skills",
+      "currentHash": "a3f2c1d9e8b7...",
+      "latestHash": "b4e3d2c1a9f8...",
+      "hasUpdate": true
+    }
+  ]
+}
+```
+</CodeGroup>
+
+### Output
+
+<CodeGroup>
+```bash No Updates
+✓ All skills are up to date (2 checked)
+```
+
+```bash Updates Available
+✓ Checked 2 skills
+  1 update available:
+  
+  • frontend-design (vercel-labs/agent-skills)
+
+Run 'skills update' to install updates
+```
+</CodeGroup>
+
+---
+
+## Update Command
+
+The `skills update` command checks for updates and automatically reinstalls any skills with available updates.
+
+```bash
+skills update
+```
+
+### Workflow
+
+<Steps>
+  <Step title="Check for updates">
+    Same as `skills check` - POST to the API with current hashes
+  </Step>
+
+  <Step title="Confirm updates">
+    If updates are found, prompt the user to confirm (unless `-y` flag is passed)
+  </Step>
+
+  <Step title="Reinstall skills">
+    For each skill with an update:
+    - Fetch the latest version from the source
+    - Compute the new folder hash
+    - Install to the same agents as before
+    - Update the lock file with new hash and `updatedAt` timestamp
+  </Step>
+
+  <Step title="Report results">
+    Show success/failure count for updated skills
+  </Step>
+</Steps>
+
+### Example Session
+
+<CodeGroup>
+```bash Interactive
+$ skills update
+✓ Checked 3 skills
+  1 update available:
+  
+  • frontend-design (vercel-labs/agent-skills)
+
+? Update 1 skill? (Y/n) y
+
+✓ Updated frontend-design
+
+✓ 1 skill updated successfully
+```
+
+```bash Non-Interactive
+$ skills update -y
+✓ Checked 3 skills
+  1 update available
+  
+✓ Updated frontend-design
+
+✓ 1 skill updated successfully
+```
+</CodeGroup>
+
+---
+
+## Force Refresh
+
+### Why `forceRefresh: true`?
+
+Both `skills check` and `skills update` always send `forceRefresh: true` in the API request. This ensures the API fetches fresh content from GitHub rather than using its Redis cache.
+
+<Warning>
+  **Without forceRefresh:** Users saw phantom "updates available" due to stale cached hashes. The fix was to always fetch fresh data.
+</Warning>
+
+### Tradeoff
+
+<CardGroup cols={2}>
+  <Card title="Slower" icon="clock">
+    Requires a GitHub API call per skill instead of using cache
+  </Card>
+  
+  <Card title="Accurate" icon="check">
+    Always reflects the true current state of the remote repository
+  </Card>
+</CardGroup>
+
+### Performance Considerations
+
+For repositories with many skills:
+
+- The API makes ONE GitHub Trees API call per repository (not per skill)
+- Skills from the same repository share a single request
+- Typical check time: 1-3 seconds for 10 skills across 3 repositories
+
+---
+
+## Update API Endpoint
+
+<ParamField path="POST" body="/check-updates">
+  https://add-skill.vercel.sh/check-updates
+</ParamField>
+
+### Request Schema
+
+<ParamField body="skills" type="array" required>
+  Array of skill metadata objects
+
+  <Expandable title="Skill Metadata">
+    <ParamField body="name" type="string" required>
+      Skill name (from lock file key)
+    </ParamField>
+
+    <ParamField body="source" type="string" required>
+      Normalized source identifier (e.g., `"owner/repo"`)
+    </ParamField>
+
+    <ParamField body="skillFolderHash" type="string" required>
+      Current GitHub tree SHA from lock file
+    </ParamField>
+
+    <ParamField body="skillPath" type="string">
+      Subpath within the repository (e.g., `"skills/frontend-design"`)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="forceRefresh" type="boolean">
+  If `true`, bypass cache and fetch fresh content from GitHub
+  
+  **Default:** `false`  
+  **CLI always sends:** `true`
+</ParamField>
+
+### Response Schema
+
+<ResponseField name="updates" type="array">
+  Array of skills with update information
+
+  <Expandable title="Update Entry">
+    <ResponseField name="name" type="string">
+      Skill name
+    </ResponseField>
+
+    <ResponseField name="source" type="string">
+      Source identifier
+    </ResponseField>
+
+    <ResponseField name="currentHash" type="string">
+      Hash from your lock file
+    </ResponseField>
+
+    <ResponseField name="latestHash" type="string">
+      Latest hash from remote source
+    </ResponseField>
+
+    <ResponseField name="hasUpdate" type="boolean">
+      `true` if hashes differ (update available)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Lock File Compatibility
+
+### Version 3 Required
+
+The update system requires lock file version 3, which introduced the `skillFolderHash` field.
+
+<Warning>
+  If you have an older lock file (v2 or earlier), it will be **automatically wiped** when the CLI reads it. You must reinstall skills to populate the new format.
+</Warning>
+
+### Migration Path
+
+<Steps>
+  <Step title="Backup (optional)">
+    If you want to preserve skill names:
+    ```bash
+    cp ~/.agents/.skill-lock.json ~/.agents/.skill-lock.json.backup
+    ```
+  </Step>
+
+  <Step title="Run any command">
+    Any CLI command will trigger the lock file wipe:
+    ```bash
+    skills list
+    ```
+  </Step>
+
+  <Step title="Reinstall skills">
+    Reinstall your skills to populate the new lock file:
+    ```bash
+    skills add vercel-labs/agent-skills --skill frontend-design
+    ```
+  </Step>
+</Steps>
+
+---
+
+## How the API Works
+
+The update API performs these steps for each skill:
+
+<Steps>
+  <Step title="Parse source">
+    Extract owner/repo from the source identifier
+  </Step>
+
+  <Step title="Fetch tree">
+    Call GitHub Trees API to get the entire repository tree:
+    ```
+    GET /repos/{owner}/{repo}/git/trees/{branch}?recursive=1
+    ```
+  </Step>
+
+  <Step title="Find skill folder">
+    Locate the tree entry matching the skill path
+  </Step>
+
+  <Step title="Extract SHA">
+    Get the `sha` field from the tree entry (this is the folder hash)
+  </Step>
+
+  <Step title="Compare">
+    Compare the remote SHA with the hash from your request
+  </Step>
+
+  <Step title="Cache (optional)">
+    If `forceRefresh: false`, cache the result in Redis for 5 minutes
+  </Step>
+</Steps>
+
+### Rate Limiting
+
+The API uses GitHub tokens to avoid rate limits:
+
+- **Authenticated requests:** 5,000 requests/hour
+- **Unauthenticated requests:** 60 requests/hour
+
+The API automatically uses a GitHub token if available (server-side).
+
+---
+
+## Telemetry
+
+The update commands send anonymous telemetry to help improve the CLI:
+
+### Check Command
+
+<CodeGroup>
+```typescript Tracked Data
+{
+  event: 'check',
+  skillCount: '5',           // Number of skills checked
+  updatesAvailable: '2',     // Number of updates found
+  v: '1.2.3',               // CLI version
+  ci: '0'                   // 1 if running in CI
+}
+```
+</CodeGroup>
+
+### Update Command
+
+<CodeGroup>
+```typescript Tracked Data
+{
+  event: 'update',
+  skillCount: '2',      // Number of skills with updates
+  successCount: '2',    // Number successfully updated
+  failCount: '0',       // Number that failed to update
+  v: '1.2.3',          // CLI version
+  ci: '0'              // 1 if running in CI
+}
+```
+</CodeGroup>
+
+<Info>
+  Telemetry can be disabled by setting `DISABLE_TELEMETRY=1` or `DO_NOT_TRACK=1`
+</Info>
+
+---
+
+## Examples
+
+### Check for Updates
+
+<CodeGroup>
+```bash Basic Check
+skills check
+```
+
+```bash CI Environment
+# Telemetry automatically disabled in CI
+skills check
+```
+
+```bash Disable Telemetry
+DISABLE_TELEMETRY=1 skills check
+```
+</CodeGroup>
+
+### Update Skills
+
+<CodeGroup>
+```bash Interactive
+skills update
+```
+
+```bash Non-Interactive
+skills update -y
+```
+
+```bash CI/CD Pipeline
+DISABLE_TELEMETRY=1 skills update -y
+```
+</CodeGroup>
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Lock Files" icon="lock" href="/advanced/lock-files">
+    Learn about lock file structure and the skillFolderHash field
+  </Card>
+  
+  <Card title="Telemetry" icon="chart-line" href="/advanced/telemetry">
+    See what data is tracked and how to disable it
+  </Card>
+</CardGroup>

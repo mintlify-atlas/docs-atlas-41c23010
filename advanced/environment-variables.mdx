@@ -1,0 +1,376 @@
+---
+title: Environment Variables
+description: All environment variables recognized by the Skills CLI
+icon: code
+---
+
+The Skills CLI recognizes several environment variables that control its behavior.
+
+## Telemetry Control
+
+<ParamField env="DISABLE_TELEMETRY" type="boolean">
+  Disable anonymous usage telemetry
+
+  <Expandable title="Details">
+    **Values:** `1`, `true`, or any truthy value  
+    **Default:** Telemetry enabled
+
+    <CodeGroup>
+    ```bash Temporary
+    DISABLE_TELEMETRY=1 npx skills add vercel-labs/agent-skills
+    ```
+
+    ```bash Permanent (Bash/Zsh)
+    echo 'export DISABLE_TELEMETRY=1' >> ~/.bashrc
+    source ~/.bashrc
+    ```
+
+    ```bash Permanent (Fish)
+    set -Ux DISABLE_TELEMETRY 1
+    ```
+    </CodeGroup>
+  </Expandable>
+</ParamField>
+
+<ParamField env="DO_NOT_TRACK" type="boolean">
+  Alternative way to disable telemetry (respects universal tracking opt-out)
+
+  <Expandable title="Details">
+    **Values:** `1`, `true`, or any truthy value  
+    **Default:** Telemetry enabled
+
+    This follows the [Console Do Not Track (DNT) standard](https://consoledonottrack.com/).
+
+    <CodeGroup>
+    ```bash Temporary
+    DO_NOT_TRACK=1 npx skills add vercel-labs/agent-skills
+    ```
+
+    ```bash Permanent (Bash/Zsh)
+    echo 'export DO_NOT_TRACK=1' >> ~/.bashrc
+    source ~/.bashrc
+    ```
+
+    ```bash Permanent (Fish)
+    set -Ux DO_NOT_TRACK 1
+    ```
+    </CodeGroup>
+  </Expandable>
+</ParamField>
+
+<Info>
+  Both `DISABLE_TELEMETRY` and `DO_NOT_TRACK` have the same effect. Use whichever you prefer.
+</Info>
+
+---
+
+## Skill Discovery
+
+<ParamField env="INSTALL_INTERNAL_SKILLS" type="boolean">
+  Show and install skills marked as `internal: true`
+
+  <Expandable title="Details">
+    **Values:** `1`, `true`, or any truthy value  
+    **Default:** Internal skills hidden
+
+    Skills can be marked as internal in their frontmatter:
+
+    <CodeGroup>
+    ```markdown Internal Skill Example
+    ---
+    name: my-internal-skill
+    description: An internal skill not shown by default
+    metadata:
+      internal: true
+    ---
+
+    # Internal Skill
+
+    This skill is only visible when INSTALL_INTERNAL_SKILLS=1
+    ```
+    </CodeGroup>
+
+    **Usage:**
+
+    <CodeGroup>
+    ```bash List Internal Skills
+    INSTALL_INTERNAL_SKILLS=1 npx skills add vercel-labs/agent-skills --list
+    ```
+
+    ```bash Install Internal Skill
+    INSTALL_INTERNAL_SKILLS=1 npx skills add vercel-labs/agent-skills --skill my-internal-skill
+    ```
+    </CodeGroup>
+
+    **Use Cases:**
+    - Work-in-progress skills not ready for general use
+    - Experimental features
+    - Skills meant only for internal tooling
+    - Development/testing skills
+  </Expandable>
+</ParamField>
+
+---
+
+## GitHub Authentication
+
+<ParamField env="GITHUB_TOKEN" type="string">
+  GitHub personal access token for authenticated API requests
+
+  <Expandable title="Details">
+    **Format:** GitHub personal access token (classic or fine-grained)  
+    **Scope Required:** `public_repo` (for public repositories)  
+    **Rate Limits:**
+    - **With token:** 5,000 requests/hour
+    - **Without token:** 60 requests/hour
+
+    The CLI uses this token to:
+    - Fetch skill folder hashes via GitHub Trees API
+    - Clone private repositories (if token has appropriate permissions)
+    - Avoid rate limiting on public repositories
+
+    <CodeGroup>
+    ```bash Temporary
+    GITHUB_TOKEN=ghp_xxxxxxxxxxxxx npx skills add vercel-labs/agent-skills
+    ```
+
+    ```bash Permanent (Bash/Zsh)
+    echo 'export GITHUB_TOKEN=ghp_xxxxxxxxxxxxx' >> ~/.bashrc
+    source ~/.bashrc
+    ```
+
+    ```bash Permanent (Fish)
+    set -Ux GITHUB_TOKEN ghp_xxxxxxxxxxxxx
+    ```
+    </CodeGroup>
+
+    <Warning>
+      Never commit tokens to version control. Use environment variables or secret management tools.
+    </Warning>
+  </Expandable>
+</ParamField>
+
+<ParamField env="GH_TOKEN" type="string">
+  Alternative GitHub token variable (checked if GITHUB_TOKEN is not set)
+
+  <Expandable title="Details">
+    **Format:** Same as `GITHUB_TOKEN`  
+    **Purpose:** Compatibility with `gh` CLI and other tools
+
+    The CLI checks tokens in this order:
+    1. `GITHUB_TOKEN` environment variable
+    2. `GH_TOKEN` environment variable
+    3. `gh` CLI auth token (via `gh auth token`)
+
+    <CodeGroup>
+    ```bash Using GH_TOKEN
+    GH_TOKEN=ghp_xxxxxxxxxxxxx npx skills add vercel-labs/agent-skills
+    ```
+    </CodeGroup>
+  </Expandable>
+</ParamField>
+
+---
+
+## CI Detection
+
+The CLI automatically detects CI environments and adjusts behavior (e.g., disables telemetry). These variables are **read-only** (set by CI platforms, not by users).
+
+<AccordionGroup>
+  <Accordion title="CI" icon="circle-check">
+    Generic CI environment indicator
+
+    **Set by:** Most CI platforms  
+    **Example:** `CI=true`
+  </Accordion>
+
+  <Accordion title="GITHUB_ACTIONS" icon="github">
+    GitHub Actions environment
+
+    **Set by:** GitHub Actions  
+    **Example:** `GITHUB_ACTIONS=true`
+  </Accordion>
+
+  <Accordion title="GITLAB_CI" icon="gitlab">
+    GitLab CI environment
+
+    **Set by:** GitLab CI/CD  
+    **Example:** `GITLAB_CI=true`
+  </Accordion>
+
+  <Accordion title="CIRCLECI" icon="circle">
+    CircleCI environment
+
+    **Set by:** CircleCI  
+    **Example:** `CIRCLECI=true`
+  </Accordion>
+
+  <Accordion title="TRAVIS" icon="t">
+    Travis CI environment
+
+    **Set by:** Travis CI  
+    **Example:** `TRAVIS=true`
+  </Accordion>
+
+  <Accordion title="BUILDKITE" icon="b">
+    Buildkite environment
+
+    **Set by:** Buildkite  
+    **Example:** `BUILDKITE=true`
+  </Accordion>
+
+  <Accordion title="JENKINS_URL" icon="j">
+    Jenkins environment
+
+    **Set by:** Jenkins  
+    **Example:** `JENKINS_URL=https://jenkins.example.com`
+  </Accordion>
+
+  <Accordion title="TEAMCITY_VERSION" icon="t">
+    TeamCity environment
+
+    **Set by:** TeamCity  
+    **Example:** `TEAMCITY_VERSION=2023.11`
+  </Accordion>
+</AccordionGroup>
+
+<Info>
+  When any CI variable is detected, the CLI automatically:
+  - Disables telemetry (unless explicitly re-enabled)
+  - Adds `ci=1` flag to any telemetry that is sent
+  - May adjust interactive prompts (some CI platforms)
+</Info>
+
+---
+
+## Examples
+
+### Development Workflow
+
+<CodeGroup>
+```bash Local Development with Telemetry Disabled
+DISABLE_TELEMETRY=1 npx skills add vercel-labs/agent-skills
+```
+
+```bash Testing Internal Skills
+INSTALL_INTERNAL_SKILLS=1 npx skills add ./my-skills --list
+```
+
+```bash Authenticated GitHub Access
+GITHUB_TOKEN=ghp_xxxxx npx skills add vercel-labs/agent-skills
+```
+</CodeGroup>
+
+### CI/CD Pipelines
+
+<CodeGroup>
+```yaml GitHub Actions
+name: Install Skills
+
+on: [push]
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install skills
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISABLE_TELEMETRY: 1
+        run: |
+          npx skills add vercel-labs/agent-skills \
+            --skill frontend-design \
+            --agent cursor \
+            --yes
+```
+
+```yaml GitLab CI
+install-skills:
+  script:
+    - export DISABLE_TELEMETRY=1
+    - npx skills add vercel-labs/agent-skills --skill frontend-design -a cursor -y
+  variables:
+    GITHUB_TOKEN: $GITHUB_TOKEN
+```
+
+```groovy Jenkins
+pipeline {
+  agent any
+  environment {
+    DISABLE_TELEMETRY = '1'
+    GITHUB_TOKEN = credentials('github-token')
+  }
+  stages {
+    stage('Install Skills') {
+      steps {
+        sh 'npx skills add vercel-labs/agent-skills --skill frontend-design -a cursor -y'
+      }
+    }
+  }
+}
+```
+</CodeGroup>
+
+### Shell Configuration
+
+<CodeGroup>
+```bash Bash/Zsh (~/.bashrc or ~/.zshrc)
+# Disable telemetry for all skills commands
+export DISABLE_TELEMETRY=1
+
+# GitHub token for authenticated requests
+export GITHUB_TOKEN=ghp_xxxxxxxxxxxxx
+
+# Enable internal skills by default
+export INSTALL_INTERNAL_SKILLS=1
+```
+
+```fish Fish (~/.config/fish/config.fish)
+# Disable telemetry
+set -Ux DISABLE_TELEMETRY 1
+
+# GitHub token
+set -Ux GITHUB_TOKEN ghp_xxxxxxxxxxxxx
+
+# Enable internal skills
+set -Ux INSTALL_INTERNAL_SKILLS 1
+```
+</CodeGroup>
+
+---
+
+## Complete Reference
+
+<ResponseField name="Environment Variables" type="table">
+  | Variable | Type | Purpose | Default |
+  |----------|------|---------|----------|
+  | `DISABLE_TELEMETRY` | boolean | Disable usage telemetry | `false` |
+  | `DO_NOT_TRACK` | boolean | Disable usage telemetry (DNT standard) | `false` |
+  | `INSTALL_INTERNAL_SKILLS` | boolean | Show internal skills | `false` |
+  | `GITHUB_TOKEN` | string | GitHub API token | `null` |
+  | `GH_TOKEN` | string | Alternative GitHub token | `null` |
+  | `CI` | boolean | Generic CI indicator | `false` |
+  | `GITHUB_ACTIONS` | boolean | GitHub Actions CI | `false` |
+  | `GITLAB_CI` | boolean | GitLab CI | `false` |
+  | `CIRCLECI` | boolean | CircleCI | `false` |
+  | `TRAVIS` | boolean | Travis CI | `false` |
+  | `BUILDKITE` | boolean | Buildkite CI | `false` |
+  | `JENKINS_URL` | string | Jenkins CI | `null` |
+  | `TEAMCITY_VERSION` | string | TeamCity CI | `null` |
+</ResponseField>
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Telemetry" icon="chart-line" href="/advanced/telemetry">
+    Learn more about what telemetry data is collected
+  </Card>
+  
+  <Card title="Lock Files" icon="lock" href="/advanced/lock-files">
+    See how GitHub tokens are used to fetch skill hashes
+  </Card>
+</CardGroup>

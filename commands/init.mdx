@@ -1,0 +1,393 @@
+---
+title: 'skills init'
+description: 'Create a new skill with SKILL.md template'
+---
+
+## Usage
+
+```bash
+skills init [name]
+```
+
+## Description
+
+The `init` command creates a new skill by generating a `SKILL.md` file with proper frontmatter and structure. It provides a starting template that follows the Agent Skills specification.
+
+## Arguments
+
+<ParamField path="name" type="string">
+  Optional skill name. Determines the skill directory and default skill name.
+  
+  - **With name**: Creates `<name>/SKILL.md`
+  - **Without name**: Creates `SKILL.md` in current directory (uses current directory name as skill name)
+  
+  **Examples:**
+  - `skills init my-skill` → Creates `my-skill/SKILL.md`
+  - `skills init` → Creates `SKILL.md` (in current directory)
+</ParamField>
+
+## Generated Template
+
+The command generates a SKILL.md file with this structure:
+
+```markdown
+---
+name: skill-name
+description: A brief description of what this skill does
+---
+
+# skill-name
+
+Instructions for the agent to follow when this skill is activated.
+
+## When to use
+
+Describe when this skill should be used.
+
+## Instructions
+
+1. First step
+2. Second step
+3. Additional steps as needed
+```
+
+### Template Components
+
+<AccordionGroup>
+  <Accordion title="Frontmatter (YAML)" icon="file-lines">
+    The frontmatter contains metadata:
+    
+    ```yaml
+    ---
+    name: skill-name
+    description: A brief description of what this skill does
+    ---
+    ```
+    
+    **Required fields:**
+    - `name`: Unique identifier (lowercase, hyphens allowed)
+    - `description`: Brief explanation of the skill's purpose
+  </Accordion>
+  
+  <Accordion title="Title" icon="heading">
+    Main heading using the skill name:
+    
+    ```markdown
+    # skill-name
+    ```
+  </Accordion>
+  
+  <Accordion title="Overview" icon="file-text">
+    General instructions for the agent:
+    
+    ```markdown
+    Instructions for the agent to follow when this skill is activated.
+    ```
+  </Accordion>
+  
+  <Accordion title="When to use" icon="question">
+    Describes scenarios where the skill should be invoked:
+    
+    ```markdown
+    ## When to use
+    
+    Describe when this skill should be used.
+    ```
+  </Accordion>
+  
+  <Accordion title="Instructions" icon="list-ol">
+    Step-by-step guide for the agent:
+    
+    ```markdown
+    ## Instructions
+    
+    1. First step
+    2. Second step
+    3. Additional steps as needed
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Examples
+
+<CodeGroup>
+
+```bash Create in Subdirectory
+# Create my-skill/SKILL.md
+skills init my-skill
+
+# Output:
+# ✓ Initialized skill: my-skill
+# 
+# Created:
+#   my-skill/SKILL.md
+```
+
+```bash Create in Current Directory
+# Create SKILL.md in current directory
+# (uses current directory name as skill name)
+skills init
+
+# Output:
+# ✓ Initialized skill: current-dir-name
+# 
+# Created:
+#   SKILL.md
+```
+
+</CodeGroup>
+
+## Output Example
+
+```bash
+$ skills init web-scraper
+
+███████╗██╗  ██╗██╗██╗     ██╗     ███████╗
+██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝
+███████╗█████╔╝ ██║██║     ██║     ███████╗
+╚════██║██╔═██╗ ██║██║     ██║     ╚════██║
+███████║██║  ██╗██║███████╗███████╗███████║
+╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝
+
+✓ Initialized skill: web-scraper
+
+Created:
+  web-scraper/SKILL.md
+
+Next steps:
+  1. Edit web-scraper/SKILL.md to define your skill instructions
+  2. Update the name and description in the frontmatter
+
+Publishing:
+  GitHub:  Push to a repo, then npx skills add <owner>/<repo>
+  URL:     Host the file, then npx skills add https://example.com/web-scraper/SKILL.md
+
+Browse existing skills for inspiration at https://skills.sh/
+```
+
+## Next Steps
+
+After creating a skill:
+
+<Steps>
+
+<Step title="Edit SKILL.md">
+  Open the generated file and customize:
+  - Update `name` in frontmatter
+  - Write a clear `description`
+  - Add detailed instructions
+  - Document when the skill should be used
+  
+  ```bash
+  # Edit the file
+  code my-skill/SKILL.md
+  # or
+  vim SKILL.md
+  ```
+</Step>
+
+<Step title="Test Locally">
+  Install the skill locally to test:
+  
+  ```bash
+  # From parent directory:
+  skills add ./my-skill
+  
+  # Or if SKILL.md is in current directory:
+  skills add ./
+  ```
+</Step>
+
+<Step title="Publish (Optional)">
+  Share your skill:
+  
+  **Option 1: GitHub**
+  ```bash
+  # Push to a repo
+  git add my-skill/
+  git commit -m "Add web-scraper skill"
+  git push
+  
+  # Others can install:
+  # npx skills add owner/repo
+  ```
+  
+  **Option 2: Direct URL**
+  ```bash
+  # Host the SKILL.md file
+  # Others can install:
+  # npx skills add https://example.com/my-skill/SKILL.md
+  ```
+</Step>
+
+</Steps>
+
+## Skill Naming Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use Kebab Case" icon="minus">
+    Name skills with lowercase and hyphens:
+    
+    ✅ `web-scraper`
+    ✅ `pr-review`
+    ✅ `commit-message`
+    
+    ❌ `WebScraper`
+    ❌ `pr_review`
+    ❌ `commit message`
+  </Card>
+  
+  <Card title="Be Descriptive" icon="message">
+    Choose names that clearly indicate purpose:
+    
+    ✅ `frontend-design-guidelines`
+    ✅ `typescript-best-practices`
+    ✅ `api-documentation`
+    
+    ❌ `skill1`
+    ❌ `helper`
+    ❌ `utils`
+  </Card>
+  
+  <Card title="Keep It Concise" icon="compress">
+    Prefer shorter names when possible:
+    
+    ✅ `pr-review`
+    ✅ `web-design`
+    ✅ `commit-msg`
+    
+    ⚠️ `pull-request-review-and-approval`
+    ⚠️ `comprehensive-web-design-guidelines`
+  </Card>
+  
+  <Card title="Avoid Conflicts" icon="triangle-exclamation">
+    Check existing skills to avoid name collisions:
+    
+    ```bash
+    # Search for similar names
+    skills find "web design"
+    ```
+  </Card>
+</CardGroup>
+
+## Advanced Frontmatter
+
+You can extend the generated frontmatter with additional fields:
+
+```yaml
+---
+name: my-skill
+description: Brief description
+metadata:
+  internal: true  # Hide from discovery
+  version: "1.0.0"
+  author: "Your Name"
+  tags:
+    - web
+    - scraping
+allowed-tools:
+  - read
+  - write
+  - bash
+context: fork  # Claude Code only
+---
+```
+
+See the [Skills Specification](https://agentskills.io) for all available fields.
+
+## File Already Exists
+
+If `SKILL.md` already exists at the target path:
+
+```bash
+$ skills init my-skill
+
+✓ Skill already exists at my-skill/SKILL.md
+```
+
+The command will not overwrite existing files. To reinitialize:
+
+```bash
+# Remove existing file
+rm my-skill/SKILL.md
+
+# Recreate
+skills init my-skill
+```
+
+## Repository Structure
+
+When creating skills for a repository, follow these patterns:
+
+<Tabs>
+  <Tab title="Single Skill">
+    For repositories with one skill:
+    
+    ```
+    my-repo/
+    ├── SKILL.md
+    ├── README.md
+    └── package.json
+    ```
+    
+    ```bash
+    cd my-repo
+    skills init
+    ```
+  </Tab>
+  
+  <Tab title="Multiple Skills">
+    For repositories with multiple skills:
+    
+    ```
+    my-repo/
+    ├── skills/
+    │   ├── web-scraper/
+    │   │   └── SKILL.md
+    │   ├── pr-review/
+    │   │   └── SKILL.md
+    │   └── commit-msg/
+    │       └── SKILL.md
+    ├── README.md
+    └── package.json
+    ```
+    
+    ```bash
+    cd my-repo/skills
+    skills init web-scraper
+    skills init pr-review
+    skills init commit-msg
+    ```
+  </Tab>
+  
+  <Tab title="Plugin Manifest">
+    For Claude Code plugin marketplace:
+    
+    ```
+    my-repo/
+    ├── .claude-plugin/
+    │   └── marketplace.json
+    ├── plugins/
+    │   └── my-plugin/
+    │       └── skills/
+    │           ├── skill1/
+    │           │   └── SKILL.md
+    │           └── skill2/
+    │               └── SKILL.md
+    └── package.json
+    ```
+    
+    ```bash
+    cd my-repo/plugins/my-plugin/skills
+    skills init skill1
+    skills init skill2
+    ```
+  </Tab>
+</Tabs>
+
+## Related Resources
+
+- [Skills Specification](https://agentskills.io) - Full specification for SKILL.md format
+- [Skills Directory](https://skills.sh) - Browse existing skills for inspiration
+- [`skills add`](/commands/add) - Install and test your skill
+- [`skills find`](/commands/find) - Search for existing skills

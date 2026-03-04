@@ -1,0 +1,306 @@
+---
+title: "Contributing"
+description: "How to contribute to the Skills CLI project"
+---
+
+We welcome contributions to the Skills CLI! Whether you're fixing bugs, adding features, or improving documentation, your help makes the project better for everyone.
+
+## Getting Started
+
+<Steps>
+  <Step title="Fork and clone the repository">
+    ```bash
+    git clone https://github.com/vercel-labs/skills.git
+    cd skills
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    The project uses pnpm as the package manager:
+    ```bash
+    pnpm install
+    ```
+  </Step>
+
+  <Step title="Build the project">
+    ```bash
+    pnpm build
+    ```
+  </Step>
+
+  <Step title="Test locally">
+    Use the dev script to test changes:
+    ```bash
+    pnpm dev add vercel-labs/agent-skills --list
+    pnpm dev experimental_sync
+    pnpm dev check
+    pnpm dev update
+    pnpm dev init my-skill
+    ```
+  </Step>
+</Steps>
+
+## Development Workflow
+
+### Running Tests
+
+```bash
+# Run all tests
+pnpm test
+
+# Run specific test files
+pnpm test tests/sanitize-name.test.ts
+pnpm test tests/skill-matching.test.ts tests/source-parser.test.ts
+
+# Type check
+pnpm type-check
+```
+
+### Code Formatting
+
+<Warning>
+  **Always run `pnpm format` before committing changes.** CI will fail if code is not properly formatted.
+</Warning>
+
+```bash
+# Format all files
+pnpm format
+
+# Check formatting without fixing
+pnpm prettier --check .
+```
+
+This project uses Prettier for code formatting to ensure consistency across contributions.
+
+## Project Architecture
+
+Understanding the codebase structure:
+
+```
+src/
+├── cli.ts           # Main entry point, command routing
+├── add.ts           # Core add command logic
+├── list.ts          # List installed skills
+├── remove.ts        # Remove skills command
+├── find.ts          # Search for skills
+├── agents.ts        # Agent definitions and detection
+├── installer.ts     # Skill installation (symlink/copy)
+├── skills.ts        # Skill discovery and parsing
+├── skill-lock.ts    # Global lock file management
+├── local-lock.ts    # Local lock file management
+├── sync.ts          # Sync from node_modules
+├── source-parser.ts # Parse git URLs, GitHub shorthand
+├── git.ts           # Git clone operations
+├── telemetry.ts     # Anonymous usage tracking
+└── types.ts         # TypeScript type definitions
+```
+
+## Adding a New Agent
+
+To add support for a new coding agent:
+
+<Steps>
+  <Step title="Add agent definition">
+    Edit `src/agents.ts` and add your agent configuration:
+
+    ```typescript
+    'my-agent': {
+      name: 'my-agent',
+      displayName: 'My Agent',
+      skillsDir: '.myagent/skills',
+      globalSkillsDir: join(home, '.myagent/skills'),
+      detectInstalled: async () => {
+        return existsSync(join(home, '.myagent'));
+      },
+    }
+    ```
+  </Step>
+
+  <Step title="Validate the configuration">
+    ```bash
+    pnpm run -C scripts validate-agents.ts
+    ```
+  </Step>
+
+  <Step title="Sync to README">
+    Update the README.md with your changes:
+    ```bash
+    pnpm run -C scripts sync-agents.ts
+    ```
+  </Step>
+
+  <Step title="Test the integration">
+    ```bash
+    pnpm dev add vercel-labs/agent-skills --agent my-agent
+    ```
+  </Step>
+</Steps>
+
+## Key Concepts
+
+### Lock File System
+
+The Skills CLI uses two types of lock files:
+
+<Tabs>
+  <Tab title="Global Lock">
+    **Location:** `~/.agents/.skill-lock.json`
+
+    Tracks all globally installed skills with:
+    - Source repository
+    - Skill path within repository  
+    - Version hash (`skillFolderHash`)
+    - Install/update timestamps
+
+    **Version:** Currently v3 (includes folder hash for update checking)
+  </Tab>
+
+  <Tab title="Local Lock">
+    **Location:** `./skills-lock.json` (checked into git)
+
+    Tracks project-level skill dependencies, similar to package-lock.json:
+    - Enables `npx skills experimental_install` to restore skills
+    - Ensures consistent skills across team members
+    - Safe to commit to version control
+  </Tab>
+</Tabs>
+
+### Update Checking
+
+The `check` and `update` commands work by:
+
+1. Reading `~/.agents/.skill-lock.json` for installed skills
+2. Fetching fresh content from GitHub for each skill
+3. Computing the GitHub tree SHA for the skill folder
+4. Comparing with `skillFolderHash` in lock file
+5. Reporting skills with different hashes as updates
+
+<Note>
+  Both commands use `forceRefresh: true` to bypass caching and ensure accurate update detection. This prevents "phantom updates" from stale cached hashes.
+</Note>
+
+### Skill Discovery
+
+The CLI searches for skills in multiple locations (see `src/skills.ts`):
+
+- Root directory (if contains `SKILL.md`)
+- `skills/` and subdirectories (`.curated/`, `.experimental/`, `.system/`)
+- Agent-specific directories (`.claude/skills/`, `.cursor/skills/`, etc.)
+- Plugin manifest declarations (`.claude-plugin/marketplace.json`)
+
+If no skills found in priority locations, falls back to recursive search.
+
+## Testing Guidelines
+
+When adding new features:
+
+<AccordionGroup>
+  <Accordion title="Write comprehensive tests" icon="flask">
+    - Add test files in `tests/` directory
+    - Follow existing naming convention: `feature-name.test.ts`
+    - Test both success and failure cases
+    - Use test utilities from `src/test-utils.ts`
+  </Accordion>
+
+  <Accordion title="Test file operations" icon="file">
+    - Use temporary directories for file system tests
+    - Clean up test files after each test
+    - Test symlink and copy modes separately
+    - Verify cross-platform compatibility
+  </Accordion>
+
+  <Accordion title="Test parsing and validation" icon="check">
+    - Test valid and invalid YAML frontmatter
+    - Test edge cases (missing fields, wrong types)
+    - Test special characters in skill names
+    - Test path traversal prevention
+  </Accordion>
+</AccordionGroup>
+
+## Pull Request Guidelines
+
+<Steps>
+  <Step title="Create a focused PR">
+    - Keep changes focused on a single feature or fix
+    - Write clear, descriptive commit messages
+    - Reference related issues in PR description
+  </Step>
+
+  <Step title="Ensure tests pass">
+    ```bash
+    pnpm test
+    pnpm type-check
+    pnpm format
+    ```
+  </Step>
+
+  <Step title="Update documentation">
+    - Update README.md if adding user-facing features
+    - Add comments for complex logic
+    - Update AGENTS.md for architecture changes
+  </Step>
+
+  <Step title="Get review">
+    - Request review from maintainers
+    - Address feedback promptly
+    - Be open to suggestions and improvements
+  </Step>
+</Steps>
+
+## Code Style
+
+- Use TypeScript for all code
+- Follow existing patterns in the codebase
+- Prefer async/await over callbacks
+- Use descriptive variable names
+- Add JSDoc comments for exported functions
+- Keep functions small and focused
+
+## Publishing
+
+<Warning>
+  Publishing is restricted to maintainers only.
+</Warning>
+
+For maintainers, the publish process is:
+
+```bash
+# 1. Bump version in package.json
+# 2. Build the project
+pnpm build
+
+# 3. Publish to npm
+npm publish
+```
+
+## Community
+
+<CardGroup cols={2}>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/vercel-labs/skills/issues">
+    Report bugs or request features
+  </Card>
+  
+  <Card title="Skills Directory" icon="globe" href="https://skills.sh">
+    Browse and share skills
+  </Card>
+  
+  <Card title="Agent Skills Spec" icon="book" href="https://agentskills.io">
+    Learn about the specification
+  </Card>
+  
+  <Card title="Vercel Agent Skills" icon="code" href="https://github.com/vercel-labs/agent-skills">
+    Example skills repository
+  </Card>
+</CardGroup>
+
+## Questions?
+
+If you have questions about contributing:
+
+- Check existing [GitHub Issues](https://github.com/vercel-labs/skills/issues)
+- Review the [AGENTS.md](https://github.com/vercel-labs/skills/blob/main/AGENTS.md) file for architecture guidance
+- Look at recent pull requests for examples
+
+<Tip>
+  First time contributing to open source? Check out the [GitHub guide to contributing](https://docs.github.com/en/get-started/quickstart/contributing-to-projects).
+</Tip>

@@ -1,0 +1,141 @@
+---
+title: Introduction
+description: The CLI for the open agent skills ecosystem
+---
+
+The Skills CLI is a universal package manager for AI coding agent skills. It allows you to install, manage, and share reusable instruction sets that extend your coding agent's capabilities across 42+ supported agents.
+
+<Info>
+  Skills are reusable instruction sets defined in `SKILL.md` files that teach agents how to perform specialized tasks like generating release notes, creating PRs, or integrating with external tools.
+</Info>
+
+## What are Agent Skills?
+
+Agent skills are reusable instruction sets that extend your coding agent's capabilities. They're defined in `SKILL.md` files with YAML frontmatter containing a `name` and `description`.
+
+Skills let agents perform specialized tasks like:
+
+- Generating release notes from git history
+- Creating PRs following your team's conventions
+- Integrating with external tools (Linear, Notion, etc.)
+- Following project-specific coding patterns
+- Automating common development workflows
+
+## Supported Agents
+
+The Skills CLI supports **42+ coding agents** including:
+
+<CardGroup cols={3}>
+  <Card title="OpenCode" icon="code">
+    `.agents/skills/` (project)
+    
+    `~/.config/opencode/skills/` (global)
+  </Card>
+  <Card title="Claude Code" icon="robot">
+    `.claude/skills/` (project)
+    
+    `~/.claude/skills/` (global)
+  </Card>
+  <Card title="Cursor" icon="arrow-pointer">
+    `.agents/skills/` (project)
+    
+    `~/.cursor/skills/` (global)
+  </Card>
+  <Card title="Cline" icon="terminal">
+    `.agents/skills/` (project)
+    
+    `~/.agents/skills/` (global)
+  </Card>
+  <Card title="Windsurf" icon="wind">
+    `.windsurf/skills/` (project)
+    
+    `~/.codeium/windsurf/skills/` (global)
+  </Card>
+  <Card title="Codex" icon="openai">
+    `.agents/skills/` (project)
+    
+    `~/.codex/skills/` (global)
+  </Card>
+</CardGroup>
+
+<Note>
+  The CLI automatically detects which coding agents you have installed. If none are detected, you'll be prompted to select which agents to install to.
+</Note>
+
+[View all 42+ supported agents →](https://github.com/vercel-labs/skills#supported-agents)
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Universal Compatibility" icon="share-nodes">
+    Works with 42+ coding agents following the [Agent Skills specification](https://agentskills.io)
+  </Card>
+  <Card title="Multiple Sources" icon="box-open">
+    Install from GitHub, GitLab, direct URLs, or local paths
+  </Card>
+  <Card title="Smart Installation" icon="link">
+    Choose between symlinks (single source of truth) or copies (independent)
+  </Card>
+  <Card title="Version Tracking" icon="clock-rotate-left">
+    Check for updates and update all skills with a single command
+  </Card>
+  <Card title="Project & Global Scopes" icon="globe">
+    Install skills per-project or globally for all projects
+  </Card>
+  <Card title="Interactive CLI" icon="terminal">
+    Search, select, and manage skills with an intuitive interface
+  </Card>
+</CardGroup>
+
+## Installation Scopes
+
+Skills can be installed in two scopes:
+
+| Scope       | Flag      | Location            | Use Case                                      |
+| ----------- | --------- | ------------------- | --------------------------------------------- |
+| **Project** | (default) | `./<agent>/skills/` | Committed with your project, shared with team |
+| **Global**  | `-g`      | `~/<agent>/skills/` | Available across all projects                 |
+
+## How It Works
+
+<Steps>
+  <Step title="Install Skills">
+    Add skills from GitHub repositories, URLs, or local paths using `npx skills add`
+  </Step>
+  <Step title="Choose Agents">
+    Select which coding agents to install the skills to, or let the CLI auto-detect
+  </Step>
+  <Step title="Select Installation Method">
+    Choose symlinks (recommended) for easy updates or copies for independence
+  </Step>
+  <Step title="Use in Your Agent">
+    The skills are now available to your coding agent in every conversation
+  </Step>
+</Steps>
+
+## Quick Example
+
+```bash Terminal
+# Install skills from a GitHub repository
+npx skills add vercel-labs/agent-skills
+
+# List available skills without installing
+npx skills add vercel-labs/agent-skills --list
+
+# Install to specific agents
+npx skills add vercel-labs/agent-skills -a claude-code -a cursor
+
+# Install globally for all projects
+npx skills add vercel-labs/agent-skills -g
+```
+
+## Discover Skills
+
+Browse and discover community skills at **[skills.sh](https://skills.sh)**
+
+## Related Resources
+
+- [Agent Skills Specification](https://agentskills.io)
+- [Vercel Agent Skills Repository](https://github.com/vercel-labs/agent-skills)
+- [GitHub Repository](https://github.com/vercel-labs/skills)
+- [npm Package](https://www.npmjs.com/package/skills)

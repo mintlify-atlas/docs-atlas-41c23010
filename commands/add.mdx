@@ -1,0 +1,285 @@
+---
+title: 'skills add'
+description: 'Install skills from GitHub repos, URLs, or local paths'
+---
+
+## Usage
+
+```bash
+skills add <source> [options]
+```
+
+## Description
+
+The `add` command installs skills from various sources including GitHub repositories, Git URLs, direct URLs, or local paths. Skills can be installed globally (available across all projects) or locally (scoped to the current project).
+
+## Arguments
+
+<ParamField path="source" type="string" required>
+  Source identifier for the skill repository. Supports:
+  - GitHub shorthand: `owner/repo`
+  - Full GitHub URL: `https://github.com/owner/repo`
+  - Direct path to skill: `https://github.com/owner/repo/tree/main/skills/skill-name`
+  - Git URL: `git@github.com:owner/repo.git`
+  - GitLab URL: `https://gitlab.com/org/repo`
+  - Local path: `./my-local-skills`
+  - Skill filter syntax: `owner/repo@skill-name`
+</ParamField>
+
+## Options
+
+<ParamField path="-g, --global" type="boolean">
+  Install skills globally to the user directory (`~/<agent>/skills/`) instead of the current project directory (`./<agent>/skills/`).
+  
+  **Default:** `false` (project-scoped)
+</ParamField>
+
+<ParamField path="-a, --agent" type="string[]">
+  Target specific agents for installation. Accepts multiple agent names or `'*'` for all agents.
+  
+  **Examples:**
+  - `-a claude-code -a cursor`
+  - `--agent '*'` (all agents)
+  
+  Valid agent names: `claude-code`, `opencode`, `cursor`, `codex`, `cline`, etc.
+</ParamField>
+
+<ParamField path="-s, --skill" type="string[]">
+  Install only specific skills by name. Accepts multiple skill names or `'*'` for all skills.
+  
+  **Examples:**
+  - `-s frontend-design -s skill-creator`
+  - `--skill '*'` (all skills)
+  - `--skill "Convex Best Practices"` (skill names with spaces must be quoted)
+</ParamField>
+
+<ParamField path="-l, --list" type="boolean">
+  List all available skills in the repository without installing them.
+  
+  **Default:** `false`
+</ParamField>
+
+<ParamField path="--copy" type="boolean">
+  Copy files instead of creating symlinks to agent directories. Use when symlinks aren't supported.
+  
+  **Default:** `false` (uses symlinks)
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip all confirmation prompts. Automatically accepts all defaults.
+  
+  **Default:** `false`
+</ParamField>
+
+<ParamField path="--all" type="boolean">
+  Shorthand for `--skill '*' --agent '*' -y`. Installs all skills to all agents without prompts.
+  
+  **Default:** `false`
+</ParamField>
+
+<ParamField path="--full-depth" type="boolean">
+  Search all subdirectories for skills, even when a root SKILL.md exists.
+  
+  **Default:** `false`
+</ParamField>
+
+## Examples
+
+<CodeGroup>
+
+```bash Basic Install
+# Install from GitHub (shorthand)
+skills add vercel-labs/agent-skills
+
+# Install from full GitHub URL
+skills add https://github.com/vercel-labs/agent-skills
+```
+
+```bash List Skills
+# List all available skills without installing
+skills add vercel-labs/agent-skills --list
+```
+
+```bash Specific Skills
+# Install specific skills by name
+skills add vercel-labs/agent-skills --skill frontend-design --skill skill-creator
+
+# Install skill with spaces in name (must be quoted)
+skills add owner/repo --skill "Convex Best Practices"
+
+# Install all skills from a repo
+skills add vercel-labs/agent-skills --skill '*'
+
+# Install using @skill syntax
+skills add vercel-labs/agent-skills@frontend-design
+```
+
+```bash Specific Agents
+# Install to specific agents
+skills add vercel-labs/agent-skills -a claude-code -a opencode
+
+# Install to all agents
+skills add vercel-labs/agent-skills --agent '*'
+```
+
+```bash Global Installation
+# Install globally (available across all projects)
+skills add vercel-labs/agent-skills -g
+
+# Install globally with specific skill and agent
+skills add vercel-labs/agent-skills -g -s frontend-design -a claude-code
+```
+
+```bash Non-Interactive
+# CI/CD friendly: install without prompts
+skills add vercel-labs/agent-skills --skill frontend-design -g -a claude-code -y
+
+# Install everything to everywhere
+skills add vercel-labs/agent-skills --all
+```
+
+```bash Alternative Sources
+# Install from GitLab
+skills add https://gitlab.com/org/repo
+
+# Install from Git URL
+skills add git@github.com:vercel-labs/agent-skills.git
+
+# Install from local path
+skills add ./my-local-skills
+
+# Install from direct skill path
+skills add https://github.com/vercel-labs/agent-skills/tree/main/skills/web-design
+```
+
+```bash Copy Mode
+# Copy files instead of symlinking (Windows without Developer Mode)
+skills add vercel-labs/agent-skills --copy
+```
+
+</CodeGroup>
+
+## Installation Scope
+
+<Steps>
+
+<Step title="Project-Scoped (Default)">
+  Skills are installed to `./<agent>/skills/` in your current directory. These skills are:
+  - Committed with your project
+  - Shared with your team
+  - Only available in this project
+  
+  ```bash
+  skills add vercel-labs/agent-skills
+  ```
+</Step>
+
+<Step title="Global Installation">
+  Skills are installed to `~/<agent>/skills/` in your home directory. These skills are:
+  - Available across all projects
+  - User-specific (not committed)
+  - Persistent after project deletion
+  
+  ```bash
+  skills add vercel-labs/agent-skills -g
+  ```
+</Step>
+
+</Steps>
+
+## Installation Methods
+
+### Symlink (Recommended)
+
+Creates a canonical copy in `.agents/skills/` and symlinks from each agent directory.
+
+**Advantages:**
+- Single source of truth
+- Easy updates
+- Saves disk space
+
+**Example:**
+```
+.agents/skills/frontend-design/  (canonical)
+.claude/skills/frontend-design   → symlink to .agents/skills/frontend-design
+.cursor/skills/frontend-design   → symlink to .agents/skills/frontend-design
+```
+
+### Copy
+
+Creates independent copies in each agent directory.
+
+**Advantages:**
+- Works on Windows without Developer Mode
+- Works in environments where symlinks aren't supported
+
+**Disadvantages:**
+- Uses more disk space
+- Updates require reinstallation
+
+**Example:**
+```
+.claude/skills/frontend-design/  (copy 1)
+.cursor/skills/frontend-design/  (copy 2)
+```
+
+## Aliases
+
+The following aliases are available:
+- `skills a` → `skills add`
+- `skills install` → `skills add`
+- `skills i` → `skills add`
+
+## Interactive Mode
+
+When run without the `-y` flag, the CLI will prompt you to:
+
+1. **Select skills** (if multiple skills are found)
+2. **Select agents** (if no agents specified with `-a`)
+3. **Choose scope** (project vs global)
+4. **Choose method** (symlink vs copy)
+5. **Confirm installation** (review summary before proceeding)
+
+## Output Example
+
+```bash
+$ skills add vercel-labs/agent-skills -s frontend-design -a claude-code
+
+███████╗██╗  ██╗██╗██╗     ██╗     ███████╗
+██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝
+███████╗█████╔╝ ██║██║     ██║     ███████╗
+╚════██║██╔═██╗ ██║██║     ██║     ╚════██║
+███████║██║  ██╗██║███████╗███████╗███████║
+╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝
+
+◆  Source: vercel-labs/agent-skills
+◇  Found 1 skill
+◆  Skill: frontend-design
+   Comprehensive guidelines for modern web design
+
+┌  Installation Summary
+│
+│  .agents/skills/frontend-design
+│    universal: OpenCode, Claude Code, Codex
+│
+└
+
+◆  Proceed with installation? … yes
+◇  Installation complete
+
+┌  Installed 1 skill
+│
+│  ✓ .agents/skills/frontend-design
+│    universal: OpenCode, Claude Code, Codex
+│
+└
+
+◆  Done!  Review skills before use; they run with full agent permissions.
+```
+
+## Related Commands
+
+- [`skills list`](/commands/list) - List installed skills
+- [`skills remove`](/commands/remove) - Remove installed skills
+- [`skills update`](/commands/update) - Update skills to latest versions
+- [`skills check`](/commands/check) - Check for available updates
