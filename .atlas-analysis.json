@@ -1,0 +1,101 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "Skills",
+  "projectDescription": "The CLI for the open agent skills ecosystem",
+  "theme": "palm",
+  "primaryColor": "#7c7c7c",
+  "lightColor": "#c3c3c3",
+  "darkColor": "#090909",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Commands",
+            "pages": [
+              "commands/add",
+              "commands/list",
+              "commands/find",
+              "commands/remove",
+              "commands/check",
+              "commands/update",
+              "commands/init",
+              "commands/sync"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/what-are-skills",
+              "guides/creating-skills",
+              "guides/installation-methods",
+              "guides/source-formats",
+              "guides/supported-agents"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/lock-files",
+              "advanced/update-system",
+              "advanced/plugin-manifests",
+              "advanced/telemetry",
+              "advanced/environment-variables"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "resources/troubleshooting",
+              "resources/compatibility",
+              "resources/contributing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "CLI Reference",
+            "pages": [
+              "api/cli-options",
+              "api/skill-format",
+              "api/agent-config"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Install skills from GitHub, GitLab, or local paths",
+    "Support for 40+ AI coding agents",
+    "Symlink or copy installation methods",
+    "Check and update installed skills",
+    "Search for skills interactively or by keyword",
+    "Create new skill templates with init command",
+    "Plugin manifest compatibility",
+    "Lock file management for reproducible installs"
+  ],
+  "publicApiSurface": [
+    "npx skills add <source>",
+    "npx skills remove [skills]",
+    "npx skills list",
+    "npx skills find [query]",
+    "npx skills check",
+    "npx skills update",
+    "npx skills init [name]",
+    "npx skills experimental_sync",
+    "npx skills experimental_install"
+  ]
+}
